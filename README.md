@@ -1,1 +1,3 @@
 # DooFuS
+
+YOU ARE IN DOOFUS
