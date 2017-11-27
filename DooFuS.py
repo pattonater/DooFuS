@@ -1,31 +1,74 @@
 import json
 import sys
 import socket
+import time
+import threading
 
-def start_node():
 
-    try:
-        recovered_nodes = json.load(open('config.json'))
-        
-        for node in recovered_nodes["Nodes"]:
-            # reach out
-            socket = socket()
-            host = socket.gethostname()
-            port = 8877
-
-            socket.bind(host, port)
-            
-
-    finally:
+#    try:
+ #       recovered_nodes = json.load(open('config.json'))
+  #  finally:
         # do something
 
-
-def connect():
-    ips = [
         
+PORT = 8877        
+_listen = None
+_nodes = {}
+_ipsDAsdA = ["137.165.163.84", "137.165.160.208"]
+_ips = ["137.165.160.208"]
+
+def _add_node(ip):
+    try:
+        conn = socket.socket()
+        conn.connect((ip, PORT))
+        node = Node(ip, conn)    
+        _nodes[ip] = node
+    except:
+        print("ARGHSDF")
 
 
+            
+def _connect_to_network():
+    for ip in _ips:
+        # TODO make this check if is your own 
+        not_mine = True
+        if not_mine:
+            # TODO select a free port?
+            _add_node(ip)
+    
+
+def _send_heartbeats():
+    while True:
+        sleep(5)
+        for node in _nodes:
+            node.send_heartbeat()
+            print("Hearbeat sent to " + str(node._ip))
+    
+            
+            
 if __name__ == "__main__":
 
     # hello
     print("Starting up")
+    #_connect_to_network()
+    #_heartbeat_thread = threading.Thread(target=_send_heartbeats)
+
+    listen = socket.socket()
+    host = socket.gethostname()
+    listen.bind((host, PORT))
+    print("Listening...")
+
+    while True:
+        conn, addr = listen.accept()
+        ip = addr[0]
+        if ip in nodes:
+            _nodes[ip].update_pulse()
+            print("Recieved heartbeat from " + str(ip))
+        else:
+            _add_node(ip)
+            _ips.append(ip)
+            print("Contacted by new node at " + str(ip))
+
+    
+
+    

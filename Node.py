@@ -5,8 +5,9 @@ class Node:
 
     TIMEOUT = 10
     
-    def __init__(self, ip, pulse = None):
+    def __init__(self, ip,socket, pulse = None):
         self._ip = ip
+        self._conn = socket
 
         # TODO set to now maybe
         self._last_pulse = pulse
@@ -19,4 +20,8 @@ class Node:
 
     def is_alive(self):
         return time.time() - self._last_pulse < TIMEOUT
+
+
+    def send_heartbeat(self):
+        self._conn.write("H")
 
