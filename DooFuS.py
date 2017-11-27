@@ -5,7 +5,7 @@ import socket
 def start_node():
 
     try:
-        recovered_nodes = json.load(open('nodes.json'))
+        recovered_nodes = json.load(open('config.json'))
         
         for node in recovered_nodes["Nodes"]:
             # reach out
@@ -18,6 +18,10 @@ def start_node():
 
     finally:
         # do something
+
+
+def connect():
+    ips = [
         
 
 
