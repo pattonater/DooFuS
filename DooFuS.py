@@ -20,6 +20,7 @@ _ips = ["137.165.160.208"]
 def _add_node(ip):
     try:
         conn = socket.socket()
+        conn.settimeout(5)
         conn.connect((ip, PORT))
         node = Node(ip, conn)    
         _nodes[ip] = node
@@ -50,12 +51,18 @@ if __name__ == "__main__":
 
     # hello
     print("Starting up")
-    #_connect_to_network()
-    #_heartbeat_thread = threading.Thread(target=_send_heartbeats)
+    _connect_to_network()
+    _heartbeat_thread = threading.Thread(target=_send_heartbeats)
+
+    print("Connected to network")
 
     listen = socket.socket()
-    host = socket.gethostname()
+    #host = socket.gethostname()
+    host = socket.gethostbyname('localhost')
+    print(host)
+    
     listen.bind((host, PORT))
+    listen.listen()
     print("Listening...")
 
     while True:
