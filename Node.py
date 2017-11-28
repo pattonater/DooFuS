@@ -23,5 +23,6 @@ class Node:
 
 
     def send_heartbeat(self):
-        self._conn.write("H")
+        self._conn.send(b"H")
+        
 
