@@ -18,6 +18,7 @@ def connect_to_node(ip):
     try:
         conn = socket.create_connection((ip, PORT), 5)
 
+        # change connection for old node, or create new node
         if ip in _nodes:
             _nodes[ip].set_connection(conn)
         else:   
@@ -37,10 +38,8 @@ def connect_to_network():
     
     print("Connecting to network...")
     for ip in _ips:
-        # TODO make this check if is your own or does it matter will just fail
         not_mine = not ip == myip 
         if not_mine:
-            # TODO select a free port?
             connect_to_node(ip)
 
 def send_heartbeats():
@@ -56,12 +55,13 @@ def send_heartbeats():
                 else:
                     print("Node " + str(node._ip) + " not found. Disconnecting")
                     node.close_connection()
-                    
 
 
 def listen_for_messages(conn, ip):
     print("Listening to " + str(ip))
     while True:
+
+        # end thread if know node is offline
         if not _nodes[ip].is_alive():
             print("No longer listening to " + str(ip))
             return
@@ -80,21 +80,31 @@ if __name__ == "__main__":
     listen = socket.socket()
     host = myip 
 
+    # tell os to recycle port quickly
     listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listen.bind((host, PORT))
-    
+
+    # start up listening socket
     listen.listen()
 
+    # attempt to connect to previously seen nodes
     threading.Thread(target=connect_to_network).start()
+
+    # start up heatbeat thread
     threading.Thread(target=send_heartbeats).start()
 
+    # start accepting new connections
     print("Listening...")
     while True:
         conn, addr = listen.accept()
         ip = addr[0]
 
         print("Contacted by node at " + str(ip))
+
+        # if is a new node or node coming back online, connect to it
         if ip not in _nodes or not _nodes[ip].is_alive():
-            print("New Node")
+            print("New Node Online")
             connect_to_node(ip)
+
+        # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, ip,)).start()
