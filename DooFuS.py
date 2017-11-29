@@ -7,14 +7,12 @@ import Node
 
 
 
-
-        
 PORT = 8875 
 _listen = None
 _nodes = {}
 myip = "137.165.163.84"
-#_ips = ["137.165.163.84", "137.165.160.208", "137.165.162.149"]
-_ips = ["137.165.162.149"]
+#_ips = ["137.165.163.84", "137.165.160.208", "137.165.162.149", "137.165.175.204"]
+_ips = ["137.165.160.208", "137.165.162.149", "vaca.cs.williams.edu", "137.165.175.204"]
 
 def add_node(ip):
     try:
@@ -40,13 +38,14 @@ def connect_to_network():
     #  finally:
         # do something
     
+    print("Connecting to network...")
     for ip in _ips:
         # TODO make this check if is your own or does it matter will just fail
         not_mine = True
         if not_mine:
             # TODO select a free port?
             add_node(ip)
-    
+    print("Connected to network")
 
 def send_heartbeats():
     while True:
@@ -81,7 +80,6 @@ if __name__ == "__main__":
     listen.bind((host, PORT))
     listen.listen()
 
-    print("Connecting to network")
     threading.Thread(target=connect_to_network).start()
     heartbeat_thread = threading.Thread(target=send_heartbeats)
     heartbeat_thread.start()
@@ -93,10 +91,8 @@ if __name__ == "__main__":
 
         print("Contacted by node at " + str(ip))
         add_node(ip)
-        _ips.append(ip)
 
-        thread = threading.Thread(target=listen_for_messages, args=(conn, addr,))
-        thread.start()
+        threading.Thread(target=listen_for_messages, args=(conn, addr,)).start()
 
 
     
