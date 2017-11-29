@@ -18,10 +18,11 @@ class Node:
         self._last_pulse = time.time()
 
     def is_alive(self):
-        return time.time() - self._last_pulse < self.TIMEOUT
+        return self._conn and (time.time() - self._last_pulse < self.TIMEOUT)
 
     def close_connection(self):
         self._conn.close()
+        self._conn = None
 
     def set_connection(self, conn):
         self._conn = conn

@@ -9,25 +9,23 @@ import Node
 
 PORT = 8889 
 _listen = None
+_old_nodes = []
 _nodes = {}
 myip = "137.165.163.84"
 _ips = ["137.165.163.84", "137.165.160.208", "137.165.121.193", "137.165.175.204"]
 
-def add_node(ip):
+def connect_to_node(ip):
     try:
-        conn = socket.socket()
-        conn.settimeout(5)
-        connected = not conn.connect_ex((ip, PORT))
-        if connected:
+        conn = socket.create_connection((ip, PORT), 5)
+
+        if ip in _nodes:
+            _nodes[ip].set_connection(conn)
+        else:   
             node = Node.Node(ip, conn)    
             _nodes[ip] = node
-            print("Connection to " + str(ip) + " succeeded")
-        else:
-            print("Connection to " + str(ip) + " failed")
+        print("Connection to " + str(ip) + " succeeded")
     except:
         print("Connection to " + str(ip) + " failed")
-
-
 
             
 def connect_to_network():
@@ -43,7 +41,7 @@ def connect_to_network():
         not_mine = not ip == myip 
         if not_mine:
             # TODO select a free port?
-            add_node(ip)
+            connect_to_node(ip)
 
 def send_heartbeats():
     while True:
@@ -62,9 +60,12 @@ def send_heartbeats():
 
 
 def listen_for_messages(conn, ip):
-    conn.setblocking(True)
     print("Listening to " + str(ip))
     while True:
+        if not _nodes[ip].is_alive():
+            print("No longer listening to " + str(ip))
+            return
+        
         msg = conn.recv(1024)
         
         if msg == b"H":
@@ -87,17 +88,13 @@ if __name__ == "__main__":
     threading.Thread(target=connect_to_network).start()
     threading.Thread(target=send_heartbeats).start()
 
+    print("Listening...")
     while True:
-        print("Listening...")
         conn, addr = listen.accept()
         ip = addr[0]
 
         print("Contacted by node at " + str(ip))
-
-        if ip not in _nodes:
-            add_node(ip)
-            print("This is a new node")
-        else:
-            _nodes[ip].set_connection(conn)
-
+        if ip not in _nodes or not _nodes[ip].is_alive():
+            print("New Node")
+            connect_to_node(ip)
         threading.Thread(target=listen_for_messages, args=(conn, ip,)).start()
