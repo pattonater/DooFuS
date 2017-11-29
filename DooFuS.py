@@ -3,30 +3,33 @@ import sys
 import socket
 import time
 import threading
-import Node
+from node import Node
 
 
 
 PORT = 8889 
 _listen = None
-_old_nodes = []
 _nodes = {}
 myip = "137.165.163.84"
 _ips = ["137.165.163.84", "137.165.160.208", "137.165.121.193", "137.165.175.204"]
 
+
+
 def connect_to_node(ip):
     try:
-        conn = socket.create_connection((ip, PORT), 5)
+        conn = socket.create_connection((ip, PORT), 1)
 
         # change connection for old node, or create new node
         if ip in _nodes:
             _nodes[ip].set_connection(conn)
         else:   
-            node = Node.Node(ip, conn)    
+            node = Node(ip, conn)    
             _nodes[ip] = node
         print("Connection to " + str(ip) + " succeeded")
+        return True
     except:
         print("Connection to " + str(ip) + " failed")
+        return False
 
             
 def connect_to_network():
@@ -42,6 +45,10 @@ def connect_to_network():
         if not_mine:
             connect_to_node(ip)
 
+            
+####################################
+## Thread for sneding heartbeats
+###################################
 def send_heartbeats():
     while True:
         time.sleep(5)
@@ -57,8 +64,12 @@ def send_heartbeats():
                     node.close_connection()
 
 
+#####################################
+## Thread for recieving messages 
+#####################################
 def listen_for_messages(conn, ip):
     print("Listening to " + str(ip))
+    print(_nodes)
     while True:
 
         # end thread if know node is offline
@@ -71,28 +82,12 @@ def listen_for_messages(conn, ip):
         if msg == b"H":
             print("Recieved heartbeat from " + str(ip))
             _nodes[ip].record_pulse()
-            
-if __name__ == "__main__":
 
-    # hello
-    print("Starting up")
 
-    listen = socket.socket()
-    host = myip 
-
-    # tell os to recycle port quickly
-    listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    listen.bind((host, PORT))
-
-    # start up listening socket
-    listen.listen()
-
-    # attempt to connect to previously seen nodes
-    threading.Thread(target=connect_to_network).start()
-
-    # start up heatbeat thread
-    threading.Thread(target=send_heartbeats).start()
-
+#########################################
+## Thread for recieving new connections 
+#########################################
+def listen_for_nodes(listen):
     # start accepting new connections
     print("Listening...")
     while True:
@@ -100,11 +95,45 @@ if __name__ == "__main__":
         ip = addr[0]
 
         print("Contacted by node at " + str(ip))
-
+        
         # if is a new node or node coming back online, connect to it
         if ip not in _nodes or not _nodes[ip].is_alive():
-            print("New Node Online")
-            connect_to_node(ip)
+            print("Node online")
+            connected = connect_to_node(ip)
+
+            if not connected:
+                conn.close()
+                continue
 
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, ip,)).start()
+ 
+            
+if __name__ == "__main__":
+
+    # hello
+    print("Starting up")
+
+    listen = socket.socket()
+
+    # tell os to recycle port quickly
+    listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    # start up listening socket and thread
+    listen.bind((myip, PORT))
+    listen.listen()
+    threading.Thread(target=listen_for_nodes, args=(listen,)).start()
+
+    # attempt to connect to previously seen nodes
+    # should this be on a separate thread?
+    # pros: user can interact with program right away
+    # cons: possible race conditions?
+    threading.Thread(target=connect_to_network).start()
+
+    # start up heatbeat thread
+    threading.Thread(target=send_heartbeats).start()
+
+
+    # TODO handle user interaction
+
+   
