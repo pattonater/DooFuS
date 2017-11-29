@@ -7,11 +7,11 @@ import Node
 
 
 
-PORT = 8876 
+PORT = 8889 
 _listen = None
 _nodes = {}
 myip = "137.165.163.84"
-_ips = ["137.165.163.84", "137.165.160.208", "137.165.162.149", "137.165.175.204"]
+_ips = ["137.165.163.84", "137.165.160.208", "137.165.121.193", "137.165.175.204"]
 
 def add_node(ip):
     try:
@@ -44,7 +44,6 @@ def connect_to_network():
         if not_mine:
             # TODO select a free port?
             add_node(ip)
-    print("Connected to network")
 
 def send_heartbeats():
     while True:
@@ -59,6 +58,7 @@ def send_heartbeats():
                 else:
                     print("Node " + str(node._ip) + " not found. Disconnecting")
                     node.close_connection()
+                    
 
 
 def listen_for_messages(conn, ip):
@@ -66,8 +66,7 @@ def listen_for_messages(conn, ip):
     print("Listening to " + str(ip))
     while True:
         msg = conn.recv(1024)
-        #print("Message: " + str(msg) + " from " + str(ip))
-
+        
         if msg == b"H":
             print("Recieved heartbeat from " + str(ip))
             _nodes[ip].record_pulse()
@@ -79,13 +78,14 @@ if __name__ == "__main__":
 
     listen = socket.socket()
     host = myip 
-    
+
+    listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listen.bind((host, PORT))
+    
     listen.listen()
 
     threading.Thread(target=connect_to_network).start()
-    heartbeat_thread = threading.Thread(target=send_heartbeats)
-    heartbeat_thread.start()
+    threading.Thread(target=send_heartbeats).start()
 
     while True:
         print("Listening...")
