@@ -47,8 +47,8 @@ def connect_to_network():
 
             
 ####################################
-## Thread for sneding heartbeats
-###################################
+## Thread for sending heartbeats
+####################################
 def send_heartbeats():
     while True:
         time.sleep(5)
