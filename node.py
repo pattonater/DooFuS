@@ -5,8 +5,9 @@ class Node:
 
     TIMEOUT = 5000
     
-    def __init__(self, ip,socket, pulse = None):
-        self._ip = ip
+    def __init__(self, host, port, socket, pulse = None):
+        self._host = host
+        self._port = port
         self._conn = socket
 
         # TODO set to now maybe
