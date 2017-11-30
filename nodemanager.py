@@ -46,7 +46,7 @@ class NodeManager:
         # this assumes every node is verified
         if not host in self._seen:
             self._verified.add(host)
-            self._write_node_to_disc(host)
+            self._write_node_to_disc(host, "dweeb")
 
         self._seen.add(host)
         self._nodes[host] = node
