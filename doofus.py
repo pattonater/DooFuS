@@ -4,8 +4,7 @@ import socket
 import time
 import threading
 from node import Node
-
-
+import urllib.request
 
 _nodes = {}
 
@@ -19,19 +18,26 @@ my_addr = None
 
 seen_nodes = set()
 
+def _get_ip():
+    #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/22157882#22157882
+    return urllib.request.urlopen('http://ident.me').read().decode('utf8')
+
 def write_node_to_disc(host):
     try:
-        # THIS DOESN"T WORK BUT IF you do open('', 'w+') json fails and erases file
-        with open('config.json') as file:
-            print("file")
+        config = None
+        # Reads out config (going to overwrite in a bit)
+        with open('config.json', 'r') as file:
             config = json.load(file)
-            nodes = config["Nodes"]
-            nodes.append({"host":host, "port":PORT})
-            print("append")
-            config.dump(nodes, file)
-            print("Wrote node %s to disc" % (host))
-    except:
-        print("Failed to write new node to disc")
+
+        # Add the new node.
+        config["Nodes"].append({"host":host, "port":PORT})
+
+        # Write back to the file.
+        with open('config.json', 'w+') as file:
+            json.dump(config, file)
+
+    except Exception as e:
+        print("Failed to write new node to disc. Exception:\n" + e)
 
 def connect_to_node(host):
     try:
@@ -148,14 +154,12 @@ def listen_for_nodes(listen):
 
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, addr,)).start()
- 
             
 if __name__ == "__main__":
-
-    my_host = sys.argv[1]
-    local_test = len(sys.argv) > 2
-
-    my_port = PORT if not local_test else int(sys.argv[2])
+    my_host = _get_ip()
+    local_test = len(sys.argv) > 1
+    
+    my_port = PORT if not local_test else int(sys.argv[1])
     my_addr = (my_host, my_port)
 
     # hello
