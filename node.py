@@ -7,7 +7,7 @@ class Node:
     # at most 1 heartbeat before we consider it dead.
     TIMEOUT = 12
     
-    def __init__(self, host, port, socket, pulse = None):
+    def __init__(self, host, port, socket):
         self._host = host
         self._port = port
         self._conn = socket

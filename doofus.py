@@ -6,17 +6,18 @@ import threading
 from node import Node
 import urllib.request
 
-_nodes = {}
 
+net_id = "Ryan"
 local_test = False
 
 PORT = 8889
 
 my_host = None
 my_port = None
-my_addr = None
 
+_nodes = {}
 seen_nodes = set()
+members = set("Ry")
 
 def _get_ip():
     #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/22157882#22157882
@@ -30,7 +31,7 @@ def write_node_to_disc(host):
             config = json.load(file)
 
         # Add the new node.
-        config["Nodes"].append({"host":host, "port":PORT})
+        config["Nodes"].append({"host":host, "port":PORT,"id":"dweeb"})
 
         # Write back to the file.
         with open('config.json', 'w+') as file:
@@ -53,8 +54,14 @@ def connect_to_node(host):
         else:   
             node = Node(host, port, conn)    
             _nodes[host] = node
-            #
+         
         print("Connection to %s (%d) succeeded" % (host, port))
+
+        # add new nodes to config file
+        if not local_test and not host in seen_nodes:
+            write_node_to_disc(host)
+            seen_nodes.add(host)
+
         return True
     except:
         print("Connection to %s (%d) failed" % (host, port))
@@ -75,11 +82,10 @@ def connect_to_network():
                 for node in config["Nodes"]:
                     host = node["host"]
                     port = PORT #int(node["port"])
-                    addr = (host,port)
 
                     seen_nodes.add(host)
 
-                    not_mine = not addr == my_addr 
+                    not_mine = (not host == my_host) or (not port == my_port)
                     if not_mine:
                         port = node["port"]
                         connect_to_node(host)
@@ -90,7 +96,7 @@ def connect_to_network():
     
             
 ####################################
-## Thread for sending heartbeats
+## Outgoing Network Communication 
 ####################################
 def send_heartbeats():
     while True:
@@ -107,8 +113,14 @@ def send_heartbeats():
                     node.close_connection()
 
 
+def notify_network_new_node(host):
+    for node in _nodes.values():
+        if node.is_alive():
+            print("hello")
+
+
 #####################################
-## Thread for recieving messages 
+## Incoming Network Communication
 #####################################
 def listen_for_messages(conn, addr):
     host = addr[0]
@@ -126,7 +138,7 @@ def listen_for_messages(conn, addr):
         
         if msg == b"H":
             print("Recieved heartbeat from %s (%d)" % (host, port))
-            _nodes[host].record_pulse()
+            _nodes[host].record_heartbeat()
 
 
 #########################################
@@ -156,13 +168,17 @@ def listen_for_nodes(listen):
 
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, addr,)).start()
-            
+
+#########################################
+## Startup 
+#########################################
 if __name__ == "__main__":
-    my_host = _get_ip()
     local_test = len(sys.argv) > 1
+
+    my_host = _get_ip() #if not local_test else "127.0.0.1"
     
     my_port = PORT if not local_test else int(sys.argv[1])
-    my_addr = (my_host, my_port)
+
 
     # hello
     print("Starting up")
