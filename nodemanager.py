@@ -1,5 +1,5 @@
 from entity import Entity
-
+import json
 
 class NodeManager:
     LISTEN_PORT = 8889
@@ -8,9 +8,10 @@ class NodeManager:
         self._nodes = {}
         self._seen = set()
         self._verified = set()
-        #self._active = set()
+        self._active = set()
         self.profile = profile
 
+    # iterate over active nodes
     def __iter__(self):
         for node in self._nodes.values():
             if node.is_alive():
@@ -18,6 +19,9 @@ class NodeManager:
 
     def __getitem__(self, host):
         return self._nodes[host]
+
+    def __contains__(self, host):
+        return host in self._active
         
 ######################################
 ## NodeManager Interface
@@ -31,18 +35,26 @@ class NodeManager:
                 id = node["id"]
 
                 # assume every id written to disc is verified for now
-                not_mine = not host == self.profile.host:
+                not_mine = not host == self.profile.host
                 if not_mine:
                     self._seen.add(host)
                     self._verified.add(host)
                 
-    def add_node(self, node):
+    def add(self, node):
+        host = node._host
 
+        # this assumes every node is verified
+        if not host in seen_nodes:
+            self._verified.add(host)
+            self._write_node_to_disc(host)
 
-        self._nodes[node.host] = node
-        if node.host in nodes:
-        
-        pass
+        self._seen.add(host)
+        self._nodes[host] = node
+        self._active.add(host)
+
+    def remove(self,node):
+        host = node._host
+        self._active.remove(host)
     
     def verify_node(self, host, id):
         pass
@@ -51,7 +63,8 @@ class NodeManager:
     def active_nodes(self):
         return [node for node in self._nodes.values() if node.is_alive()]
     
-        
+    def inactive_hosts(self):
+        return [host for host in self._seen if host not in self._active]
 
 
 
@@ -71,41 +84,7 @@ class NodeManager:
 ## Helper Functions
 #####################################
 
-    def _connect_to_network(self):
-        for host in self._seen:
-
-            #this will break the local testing
-            not_mine = not host == self.profile.host:
-            if not_mine:
-                self._connect_to_node(host)
-
                     
-    def _connect_to_node(host):
-        try:
-            # for testing locally: 8825 -> 8826 and 8826 -> 8825
-            port = 8825 + (my_port % 2) if local_test else LISTEN_PORT
-            conn = socket.create_connection((host, port), 1)
-
-            # change connection for old node, or create new node
-            if host in self._nodes:
-                self._nodes[host].set_connection(conn)
-            else:   
-                node = Node(host, port, conn)    
-                self._nodes[host] = node
-            
-            print("Connection to %s succeeded" % (host))
-
-            # add new nodes to config file
-            # TODO this shouldn't happen until a node is verified
-            if not local_test and not host in self.seen:
-                self._write_node_to_disc(host, "dweeb")
-                self._seen.add(host)
-
-            return True
-        except:
-            print("Connection to %s failed" % (host))
-            return False
-
     def _write_node_to_disc(host, id):
         try:
             config = None
@@ -125,17 +104,3 @@ class NodeManager:
         except Exception as e:
             print("Failed to write new node to disc. Exception:\n" + e)
 
-
-    def _send_heartbeats():
-        while True:
-            time.sleep(5)
-            for node in _nodes.values():
-
-                if node.is_alive():
-                    success = node.send_heartbeat()
-                
-                    if success:
-                        print("Hearbeat sent to %s (%d)" % (node._host, node._port))
-                    else:
-                        print("Node %s (%d) not found. Disconnecting" % (node._host, node._port))
-                        node.close_connection()
