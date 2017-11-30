@@ -1,0 +1,9 @@
+{
+    "files": [
+	{
+	    "filename" : "dummy.txt",
+	    "replicas" : [],
+	    "uploader" : "pacman"
+	}
+    ]
+}
