@@ -26,25 +26,6 @@ def _get_ip():
     #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/22157882#22157882
     return urllib.request.urlopen('http://ident.me').read().decode('utf8')
 
-def write_node_to_disc(host):
-    try:
-        config = None
-        # Reads out config (going to overwrite in a bit)
-        with open('config.json', 'r') as file:
-            config = json.load(file)
-
-        # Add the new node.
-        config["Nodes"].append({"host":host, "port":LISTEN_PORT,"id":"dweeb"})
-
-        # Write back to the file.
-        with open('config.json', 'w+') as file:
-            json.dump(config, file)
-
-        print("Added %s:%d to config file" % (host, LISTEN_PORT))
-
-    except Exception as e:
-        print("Failed to write new node to disc. Exception:\n" + e)
-
 def connect_to_node(host):
     node = None
     try:

@@ -85,7 +85,7 @@ class NodeManager:
 #####################################
 
                     
-    def _write_node_to_disc(host, id):
+    def _write_node_to_disc(self, host, id):
         try:
             config = None
             # Reads out config (going to overwrite in a bit)
