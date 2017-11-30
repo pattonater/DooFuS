@@ -13,14 +13,14 @@ class Node:
         self._conn = socket
 
         # TODO set to now maybe
-        self._last_pulse = time.time()
+        self._last_heartbeat = time.time()
 
-    def record_pulse(self):
+    def record_heartbeat(self):
         # TODO set to now maybe
-        self._last_pulse = time.time()
+        self._last_heartbeat = time.time()
 
     def is_alive(self):
-        return self._conn and (time.time() - self._last_pulse < self.TIMEOUT)
+        return self._conn and (time.time() - self._last_heartbeat < self.TIMEOUT)
 
     def close_connection(self):
         self._conn.close()
@@ -28,7 +28,7 @@ class Node:
 
     def set_connection(self, conn):
         self._conn = conn
-        self.record_pulse()
+        self.record_heartbeat()
 
     def send_heartbeat(self):
         try:
@@ -37,5 +37,8 @@ class Node:
             return False
 
         return True
+
+        
+
         
 
