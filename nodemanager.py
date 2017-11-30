@@ -1,11 +1,16 @@
 from entity import Entity
 
 
-class NodeList:
+class NodeManager:
     def __init__(self, me):
         self._nodes = {}
-        self._seen_nodes = set()
+        self._seen = set()
+        self._verified = set()
         self.profile = profile
+
+    ######################################
+    ## NodeManager Interface
+    #####################################
 
     def load_from_config(self, nodes):
         with open('config.json') as file:
@@ -13,16 +18,16 @@ class NodeList:
             for node in config["Nodes"]:
                 host = node["host"]
                 port = int(node["port"])
-                
-                seen_nodes.add(host)
+                id = node["id"]
+
+                # assume every id written to disc is verified for now
+                self._seen.add(host)
+                self._verified.add(host)
                 
                 not_mine = not host == profile.host and not port == profile.port 
                 if not_mine:
                     port = node["port"]
-                    _connect_to_node(host)
-
-
-
+                    self._connect_to_node(host)
     
 
     def _connect_to_node(host):
@@ -32,25 +37,26 @@ class NodeList:
             conn = socket.create_connection((host, port), 1)
 
             # change connection for old node, or create new node
-            if host in _nodes:
-                _nodes[host].set_connection(conn)
+            if host in self._nodes:
+                self._nodes[host].set_connection(conn)
             else:   
                 node = Node(host, port, conn)    
-                _nodes[host] = node
+                self._nodes[host] = node
             
             print("Connection to %s (%d) succeeded" % (host, port))
 
             # add new nodes to config file
-            if not local_test and not host in seen_nodes:
-                _write_node_to_disc(host)
-                seen_nodes.add(host)
+            # TODO this shouldn't happen until a node is verified
+            if not local_test and not host in self.seen:
+                self._write_node_to_disc(host, port)
+                self._seen.add(host)
 
             return True
         except:
             print("Connection to %s (%d) failed" % (host, port))
             return False
 
-    def _write_node_to_disc(host):
+    def _write_node_to_disc(host, port):
         try:
             config = None
             # Reads out config (going to overwrite in a bit)
@@ -58,7 +64,7 @@ class NodeList:
                 config = json.load(file)
 
             # Add the new node.
-            config["Nodes"].append({"host":host, "port":PORT})
+            config["Nodes"].append({"host":host, "port":port, "id":"dweeb"})
 
             # Write back to the file.
             with open('config.json', 'w+') as file:
