@@ -102,5 +102,5 @@ class NodeManager:
             print("Added %s (%s) to config file" % (host, id))
 
         except Exception as e:
-            print("Failed to write new node to disc. Exception:\n" + e)
+            print("Failed to write new node to disc. Exception: " + str(e))
 
