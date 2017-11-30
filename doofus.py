@@ -36,6 +36,8 @@ def write_node_to_disc(host):
         with open('config.json', 'w+') as file:
             json.dump(config, file)
 
+        print("Added %s:%d to config file" % (host, PORT))
+
     except Exception as e:
         print("Failed to write new node to disc. Exception:\n" + e)
 

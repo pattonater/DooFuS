@@ -3,7 +3,9 @@ import time
 # This class will represent other nodes in the system
 class Node:
 
-    TIMEOUT = 5000
+    # Current heartrate is 0.2/sec, so this gives us time to miss
+    # at most 1 heartbeat before we consider it dead.
+    TIMEOUT = 12
     
     def __init__(self, host, port, socket, pulse = None):
         self._host = host
@@ -12,7 +14,6 @@ class Node:
 
         # TODO set to now maybe
         self._last_pulse = time.time()
-
 
     def record_pulse(self):
         # TODO set to now maybe
