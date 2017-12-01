@@ -65,12 +65,13 @@ class NodeManager:
             self._verified.add(host)
             if host not in self._seen:
                 self._write_node_to_disc(host, "dweeb")
+            
         else:
             print("NodeManager: Node %s identity %s not recognized" % (host, id))
             node.close_connection()
             # don't call remove here because will happen automatically in the listen thread
             # calling close_connection speeds up that process though
-            
+        return verified
 
     def active_nodes(self):
         return [node for node in self._nodes.values() if node.is_alive()]

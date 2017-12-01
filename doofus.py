@@ -27,7 +27,6 @@ def _get_ip():
     return urllib.request.urlopen('http://ident.me').read().decode('utf8')
 
 def connect_to_node(host):
-    node = None
     try:
         # for testing locally: 8825 -> 8826 and 8826 -> 8825
         port = 8825 + (my_port % 2) if local_test else LISTEN_PORT
@@ -38,12 +37,14 @@ def connect_to_node(host):
 
         # send it your credentials
         node.send_id(my_id)
+
+        node_man.online(node)
         
         print("Connection to %s succeeded" % (host))
+        return True
     except:
         print("Connection to %s failed" % (host))
-
-    return node
+        return False
 
             
 def connect_to_network():
@@ -52,14 +53,10 @@ def connect_to_network():
     # switch to reading from a json file
     try:
         if local_test:
-            node = connect_to_node(my_host)
-            if node:
-                node_man.online(node)
+            connect_to_node(my_host)
         else:
             for host in node_man.inactive_hosts():
-                    node = connect_to_node(host)
-                    if node:
-                        node_man.online(node)
+                connect_to_node(host)
     finally:
         print("Tried all previously seen nodes")
     
@@ -79,9 +76,12 @@ def send_heartbeats():
 
 
 def notify_network_new_node(host):
+    print("Broadcast %s to network" % (host))
     for node in node_man:
-        # TODO tell them about the new node 
-        print("hello")
+        if not node._host == host:
+            node.send_new_node(host)
+
+        
 
 
 #####################################
@@ -107,7 +107,14 @@ def listen_for_messages(conn, host):
         elif type == "ID":
             print("Received id from %s" % (host))
             id = msg[1] if len(msg) > 2 else "dweeb"
-            node_man.verify(node, id)
+            verified = node_man.verify(node, id)
+            if verified:
+                notify_network_new_node(host)
+        elif type == "HOST":
+            new_host = msg[1] if len(msg) > 2 else "notahost"
+            if not new_host in node_man:
+                print("Received new host %s from %s" % (new_host, host))
+                connect_to_node(host)
             
 
 
@@ -125,11 +132,8 @@ def listen_for_nodes(listen):
 
         # if is a new node or node coming back online, connect to it
         if host not in node_man:
-            node = connect_to_node(host)
-
-            if node:
-                node_man.online(node)
-            else:
+            connected = connect_to_node(host)
+            if not connected:
                 conn.close()
                 continue
         

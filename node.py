@@ -26,22 +26,22 @@ class Node:
             self._conn = None
 
     def send_heartbeat(self):
-        try:
-            self._conn.send(b"H")
-        except:
-            return False
-
-        return True
+        return self._send_message("H")
     
     def send_id(self, id):
+        return self._send_message("ID-" + str(id))
+
+    def send_node(self, host):
+        return self._send_message("HOST-" + str(host))
+
+    def _send_message(self, msg):
         try:
-            msg = str.encode("ID-" + str(id))
-            msg = b"ID-HI"
-            self._conn.send(msg)
+            self._conn.send(str.encode(msg))
         except:
             return False
 
         return True
+
 
         
 
