@@ -11,11 +11,11 @@ class NodeManager:
         self._active = set()
         self.profile = profile
 
-    # iterate over active nodes
+    # iterate over active, verified nodes
     def __iter__(self):
-        for node in self._nodes.values():
-            if node.is_alive():
-                yield node
+        for host in self._nodes:
+            if host in self._active and host in self._verified:
+                yield self._nodes[host]
 
     def __getitem__(self, host):
         return self._nodes[host]
@@ -34,49 +34,49 @@ class NodeManager:
                 host = node["host"]
                 id = node["id"]
 
-                # assume every id written to disc is verified for now
+                # add every host as seen
                 not_mine = not host == self.profile.host
-                if not_mine:
-                    self._seen.add(host)
-                    self._verified.add(host)
+                #if not_mine:
+                self._seen.add(host)
                 
-    def add(self, node):
+    def online(self, node):
         host = node._host
 
-        # this assumes every node is verified
-        if not host in self._seen:
-            self._verified.add(host)
-            self._write_node_to_disc(host, "dweeb")
-
+        # node active, but not yet verified
+        self._active.add(host)
         self._seen.add(host)
         self._nodes[host] = node
-        self._active.add(host)
+        print("NodeManager: added %s" % (host))
 
-    def remove(self,node):
+    def offline(self,node):
         host = node._host
+        node.close_connection()
         self._active.remove(host)
+        print("NodeManager: removed %s" % (host))
     
-    def verify_node(self, host, id):
-        pass
+    def verify(self, node, id):
+        # TODO have this test (from a file presumably) whether id is appropiate
+        verified = True
+        
+        host = node._host
 
+        if verified:
+            print("NodeManager: Node %s identity verified as %s" % (host, id))
+            self._verified.add(host)
+            if host not in self._seen:
+                self._write_node_to_disc(host, "dweeb")
+        else:
+            print("NodeManager: Node %s identity %s not recognized" % (host, id))
+            node.close_connection()
+            # don't call remove here because will happen automatically in the listen thread
+            # calling close_connection speeds up that process though
+            
 
     def active_nodes(self):
         return [node for node in self._nodes.values() if node.is_alive()]
     
     def inactive_hosts(self):
         return [host for host in self._seen if host not in self._active]
-
-
-
-    def join_network(self):
-        # attempt to connect to previously seen nodes
-        # should this be on a separate thread?
-        # pros: user can interact with program right away
-        # cons: possible race conditions?
-        threading.Thread(target=self._connect_to_network).start()
-
-        # start up heatbeat thread
-        threading.Thread(target=self._send_heartbeats).start()
 
 
         

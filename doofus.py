@@ -20,7 +20,7 @@ ID = "r5"
 my_host = None
 my_port = None
 
-node_manager = None
+node_man = None
 
 def _get_ip():
     #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/22157882#22157882
@@ -35,6 +35,9 @@ def connect_to_node(host):
 
         # create new node
         node = Node(host, port, conn)
+
+        # send it your credentials
+        node.send_id(my_id)
         
         print("Connection to %s succeeded" % (host))
     except:
@@ -49,12 +52,14 @@ def connect_to_network():
     # switch to reading from a json file
     try:
         if local_test:
-            connect_to_node(my_host)
+            node = connect_to_node(my_host)
+            if node:
+                node_man.online(node)
         else:
-            for host in node_manager.inactive_hosts():
+            for host in node_man.inactive_hosts():
                     node = connect_to_node(host)
                     if node:
-                        node_manager.add(node)
+                        node_man.online(node)
     finally:
         print("Tried all previously seen nodes")
     
@@ -66,17 +71,15 @@ def connect_to_network():
 def send_heartbeats():
     while True:
         time.sleep(5)
-        for node in node_manager:
-            if node.is_alive():
-                if node.send_heartbeat():
-                    print("Hearbeat sent to %s (%d)" % (node._host, node._port))
-                else:
-                    node_manager.remove(node)
-                    print("Node %s (%d) not found. Disconnecting" % (node._host, node._port))
+        for node in node_man:
+            if node.send_heartbeat():
+                print("Hearbeat sent to %s (%d)" % (node._host, node._port))
+            else:
+                print("Heartbeat to %s (%d) failed" % (node._host, node._port))
 
 
 def notify_network_new_node(host):
-    for node in node_manager:
+    for node in node_man:
         # TODO tell them about the new node 
         print("hello")
 
@@ -85,20 +88,27 @@ def notify_network_new_node(host):
 ## Incoming Network Communication
 #####################################
 def listen_for_messages(conn, host):
-    node = node_manager[host]
+    node = node_man[host]
     
     print("Listening to " + str(host))
 
     while True:
-        # end thread if know node is offline
+        # end thread if node is now offline
         if not node.is_alive():
-            print("No longer listening to %s" % (host))
+            print("Node %s no longer alive. Disconnecting" % (node._host))
+            node_man.offline(node)
             return
         
-        msg = conn.recv(1024)
-        if msg == b"H":
+        msg = bytes.decode(conn.recv(1024)).split("-")
+        type = msg[0]
+        if type == "H":
             print("Recieved heartbeat from %s" % (host))
             node.record_heartbeat()
+        elif type == "ID":
+            print("Received id from %s" % (host))
+            id = msg[1] if len(msg) > 2 else "dweeb"
+            node_man.verify(node, id)
+            
 
 
 #########################################
@@ -114,16 +124,15 @@ def listen_for_nodes(listen):
         print("Contacted by node at " + str(host))
 
         # if is a new node or node coming back online, connect to it
-        if host not in node_manager:
-            print("Node online")
+        if host not in node_man:
             node = connect_to_node(host)
 
             if node:
-                node_manager.add(node)
+                node_man.online(node)
             else:
                 conn.close()
                 continue
-               
+        
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, host,)).start()
 
@@ -133,13 +142,13 @@ def listen_for_nodes(listen):
 if __name__ == "__main__":
     local_test = len(sys.argv) > 1
 
-    my_host = _get_ip() #if not local_test else "127.0.0.1"    
+    my_host = _get_ip() if not local_test else "127.0.0.1"    
     my_port = LISTEN_PORT if not local_test else int(sys.argv[1])
     my_id = ID
     
     profile = Entity(my_host, my_port, my_id)
-    node_manager = NodeManager(profile)
-    node_manager.load_from_config()
+    node_man = NodeManager(profile)
+    node_man.load_from_config()
     
     # hello
     print("Starting up")

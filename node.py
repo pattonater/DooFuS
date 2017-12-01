@@ -12,27 +12,32 @@ class Node:
         self._port = port
         self._conn = socket
 
-        # TODO set to now maybe
         self._last_heartbeat = time.time()
 
     def record_heartbeat(self):
-        # TODO set to now maybe
         self._last_heartbeat = time.time()
 
     def is_alive(self):
         return self._conn and (time.time() - self._last_heartbeat < self.TIMEOUT)
 
     def close_connection(self):
-        self._conn.close()
-        self._conn = None
-
-    def set_connection(self, conn):
-        self._conn = conn
-        self.record_heartbeat()
+        if self._conn:
+            self._conn.close()
+            self._conn = None
 
     def send_heartbeat(self):
         try:
             self._conn.send(b"H")
+        except:
+            return False
+
+        return True
+    
+    def send_id(self, id):
+        try:
+            msg = str.encode("ID-" + str(id))
+            msg = b"ID-HI"
+            self._conn.send(msg)
         except:
             return False
 
