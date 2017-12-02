@@ -5,6 +5,7 @@
 
 
 import sys
+import traceback
 
 def _test_dfs():
     import dfs
@@ -18,12 +19,24 @@ def _test_dfs():
             print("Ending test.")
             return 0
 
-        print(prefix + "SUCCESS")
-        return 1
+        file_system.delete_file("newfile")
+
+        file_system.add_file("newfile", "userA")
+
+        try:
+            file_system.add_file("newfile", "userA")
+        
+        except dfs.DFSAddFileError:
+            print(prefix + "SUCCESS")
+            return 1
 
     except dfs.DFSError as e:
         print(e)
         return 0
+    except Exception as e:
+        traceback.print_tb(e.__traceback__)
+        return 0
+
 
 if __name__ == "__main__":
     outcome = 0
