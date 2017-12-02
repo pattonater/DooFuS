@@ -69,7 +69,7 @@ class NodeManager:
         else:
             print("NodeManager: Node %s identity %s not recognized" % (host, id))
             node.close_connection()
-            # don't call remove here because will happen automatically in the listen thread
+            # don't call remove here because will happen automatically in the listen thread and don't want it to happen twice
             # calling close_connection speeds up that process though
         return verified
 
