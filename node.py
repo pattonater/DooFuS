@@ -14,6 +14,10 @@ class Node:
 
         self._last_heartbeat = time.time()
 
+
+    def host(self):
+        return self._host
+
     def record_heartbeat(self):
         self._last_heartbeat = time.time()
 

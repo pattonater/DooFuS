@@ -21,6 +21,8 @@ class NodeManager:
         return self._nodes[host]
 
     def __contains__(self, host):
+        # Just active so don't double connect to the same node before it's verified
+        # kinda hacky, is there a better way to decide this? maybe a separate method but don't think this 'in' is used for anything else
         return host in self._active
         
 ######################################
@@ -40,7 +42,7 @@ class NodeManager:
                 self._seen.add(host)
                 
     def online(self, node):
-        host = node._host
+        host = node.host()
 
         # node active, but not yet verified
         self._active.add(host)
@@ -49,7 +51,7 @@ class NodeManager:
         print("NodeManager: added %s" % (host))
 
     def offline(self,node):
-        host = node._host
+        host = node.host()
         node.close_connection()
         self._active.remove(host)
         print("NodeManager: removed %s" % (host))
@@ -58,7 +60,7 @@ class NodeManager:
         # TODO have this test (from a file presumably) whether id is appropiate
         verified = True
         
-        host = node._host
+        host = node.host()
 
         if verified:
             print("NodeManager: Node %s identity verified as %s" % (host, id))

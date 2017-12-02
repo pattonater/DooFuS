@@ -78,7 +78,7 @@ def send_heartbeats():
 def notify_network_new_node(host):
     print("Broadcast %s to network" % (host))
     for node in node_man:
-        if not node._host == host:
+        if not node.host() == host:
             node.send_new_node(host)
 
         
@@ -95,7 +95,7 @@ def listen_for_messages(conn, host):
     while True:
         # end thread if node is now offline
         if not node.is_alive():
-            print("Node %s no longer alive. Disconnecting" % (node._host))
+            print("Node %s no longer alive. Disconnecting" % (node.host()))
             node_man.offline(node)
             return
         
