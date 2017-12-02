@@ -1,15 +1,1 @@
-{
-    "files": [
-	{
-	    "filename" : "test1.txt",
-	    "replicas" : [],
-	    "uploader" : "pacman"
-	},
-	
-	{
-	    "filename" : "test2.txt",
-	    "replicas" : [],
-	    "uploader" : "inky"
-	}
-    ]
-}
+{"files": [{"filename": "dummy.txt", "replicas": [], "uploader": "pacman"}, {"filename": "dummy2.txt", "replicas": [], "uploader": "inky"}, {"filename": "newfile", "replicas": [], "uploader": "userA"}]}

@@ -30,16 +30,16 @@ class DFS:
     # This should be called with some regularity, but not necessarily
     # after every operation. Perhaps we should keep some additional
     # state to track that?
-    def _update():
+    def _update(self):
         # Early abort if we don't want to write to disk yet
         self._current_update += 1
-        if self._current_update < _UPDATE_PERIOD:
+        if self._current_update < self._UPDATE_PERIOD:
             return
 
         # Time to write to disk
         try:
             with open(self._log_name, 'w+') as file:
-                json.dump(self._log, self._log_name)
+                json.dump(self._log, file)
         except IOError as e:
             raise DFSIOError(e)
 
@@ -48,7 +48,7 @@ class DFS:
 
 
     # Adds file object to log object
-    def add_file(filename, uploader):
+    def add_file(self, filename, uploader):
         # Verify the file doesn't already exist (name collision)
         for f in self._log["files"]:
             if f["filename"] == filename and f["uploader"] == uploader:
@@ -64,7 +64,7 @@ class DFS:
 
         
     # Removes file object from log
-    def delete_file(filename):    
+    def delete_file(self, filename):    
         self._log["files"][:] = [f for f in self._log["files"]
                                  if f.get("filename") != filename]
                 
@@ -83,5 +83,6 @@ class DFSIOError(DFSError):
         DFSError.__init__(self, "DFS i/o error: \n" + e)
 
 class DFSAddFileError(DFSError):
-    def __init__(self, filename, uploader)
-        DFSError.__init__(self, "DFS add file error: Could not add file\nfilename: " + filename + "\nuploader: " + uploader)
+    def __init__(self, filename, uploader):
+        DFSError.__init__(self, "DFS add file error: Could not add file\n"
+            + "filename: " + filename + "\nuploader: " + uploader)
