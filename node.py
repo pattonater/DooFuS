@@ -35,7 +35,7 @@ class Node:
     def send_id(self, id):
         return self._send_message("ID-" + str(id))
 
-    def send_node(self, host):
+    def send_host(self, host):
         return self._send_message("HOST-" + str(host))
 
     def _send_message(self, msg):
