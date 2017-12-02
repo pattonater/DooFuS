@@ -70,6 +70,11 @@ class DFS:
                 
         self._update()
         
+
+        
+#####################
+## DFS Exceptions
+#####################
 class DFSError(Exception):
     def __init__(self, msg):
         Exception.__init__(self, msg)
