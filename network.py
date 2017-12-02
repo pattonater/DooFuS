@@ -87,7 +87,7 @@ class Network:
         if verified:
             print("Network: %s identity verified as %s" % (host, id))
             self._verified.add(host)
-            if host in self._new:
+            if host in self._new and not self.TESTING_MODE:
                 self._write_node_to_disc(host)
             
         else:
@@ -148,7 +148,7 @@ class Network:
 ## Helper Functions
 #####################################
     def _load_from_config(self):
-        with open('config.json') as file:
+        with open('config_network.json') as file:
             config = json.load(file)
             for node in config["Nodes"]:
                 host = node["host"]
@@ -162,7 +162,7 @@ class Network:
         try:
             config = None
             # Reads out config (going to overwrite in a bit)
-            with open('config.json', 'r') as file:
+            with open('config_network.json', 'r') as file:
                 config = json.load(file)
 
             # Add the new node.
