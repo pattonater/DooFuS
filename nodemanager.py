@@ -7,23 +7,25 @@ class NodeManager:
     def __init__(self, profile):
         self._nodes = {}
         self._seen = set()
+        self._new = set()
+        self._online = set()
         self._verified = set()
-        self._active = set()
         self.profile = profile
 
     # iterate over active, verified nodes
     def __iter__(self):
         for host in self._nodes:
-            if host in self._active and host in self._verified:
+            if host in self._online and host in self._verified:
                 yield self._nodes[host]
 
     def __getitem__(self, host):
         return self._nodes[host]
-
-    def __contains__(self, host):
+    
+    # TODO is this necessary?
+  #  def __contains__(self, host):
         # Just active so don't double connect to the same node before it's verified
         # kinda hacky, is there a better way to decide this? maybe a separate method but don't think this 'in' is used for anything else
-        return host in self._active
+   #     return host in self._online
         
 ######################################
 ## NodeManager Interface
@@ -36,24 +38,25 @@ class NodeManager:
                 host = node["host"]
                 id = node["id"]
 
-                # add every host as seen
-                not_mine = not host == self.profile.host
-                #if not_mine:
                 self._seen.add(host)
                 
-    def online(self, node):
+    def set_online(self, node):
         host = node.host()
 
+        if host not in self._seen:
+            print("NodeManager: First time seeing host %s" % (host))
+            self._new.add(host)
+
         # node active, but not yet verified
-        self._active.add(host)
+        self._online.add(host)
         self._seen.add(host)
         self._nodes[host] = node
         print("NodeManager: Node %s online. Awaiting verification..." % (host))
 
-    def offline(self,node):
+    def set_offline(self,node):
         host = node.host()
         node.close_connection()
-        self._active.remove(host)
+        self._online.remove(host)
         print("NodeManager: %s offline" % (host))
     
     def verify(self, node, id):
@@ -65,7 +68,7 @@ class NodeManager:
         if verified:
             print("NodeManager: Node %s identity verified as %s" % (host, id))
             self._verified.add(host)
-            if host not in self._seen:
+            if host in self._new:
                 self._write_node_to_disc(host)
             
         else:
@@ -75,6 +78,14 @@ class NodeManager:
             # calling close_connection speeds up that process though
             node.close_connection()
         return verified
+
+
+    def not_connected(self, host):
+        return host not in self._online
+
+    def check_new(self, node):
+        host = node.host()
+        return host in self._new
 
     def inactive_hosts(self):
         return [host for host in self._seen if host not in self._active]

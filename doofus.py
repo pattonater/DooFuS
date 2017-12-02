@@ -8,14 +8,14 @@ import urllib.request
 from node import Node
 from nodemanager import NodeManager
 from entity import Entity
-
+import dfs # DFS exceptions
+from dfs import DFS # DFS itself
 
 
 local_test = False
 
 LISTEN_PORT = 8889
 ID = "r5"
-
 
 my_host = None
 my_port = None
@@ -38,7 +38,7 @@ def connect_to_node(host):
         # send it your credentials
         node.send_id(my_id)
 
-        node_man.online(node)
+        node_man.set_online(node)
         
         print("Connection to %s succeeded" % (host))
         return True
@@ -80,7 +80,6 @@ def notify_network_new_node(host):
     for node in node_man:
         if not node.host() == host:
             node.send_new_node(host)
-
         
 
 
@@ -96,7 +95,7 @@ def listen_for_messages(conn, host):
         # end thread if node is now offline
         if not node.is_alive():
             print("Node %s no longer alive. Disconnecting" % (node.host()))
-            node_man.offline(node)
+            node_man.set_offline(node)
             return
         
         msg = bytes.decode(conn.recv(1024)).split("-")
@@ -112,8 +111,8 @@ def listen_for_messages(conn, host):
                 notify_network_new_node(host)
         elif type == "HOST":
             new_host = msg[1] if len(msg) > 2 else "notahost"
-            if not new_host in node_man:
-                print("Received new host %s from %s" % (new_host, host))
+            if node_man.not_connected(new_host):
+                print("Notified host %s online (by %s)" % (new_host, host))
                 connect_to_node(host)
             
 
@@ -131,13 +130,12 @@ def listen_for_nodes(listen):
         print("Contacted by node at " + str(host))
 
         # if is a new node or node coming back online, connect to it
-        if host not in node_man:
+        if node_man.not_connected(host):
             connected = connect_to_node(host)
             if not connected:
+                # don't start up a thread to listen to this node and kill the connection
                 conn.close()
                 continue
-
-            # TODO mark this node as new somehow so when it gets verified know to send it stuff like DFS and verified ids
         
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, host,)).start()
