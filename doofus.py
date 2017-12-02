@@ -8,7 +8,8 @@ import urllib.request
 from node import Node
 from nodemanager import NodeManager
 from entity import Entity
-
+import dfs # DFS exceptions
+from dfs import DFS # DFS itself
 
 
 local_test = False

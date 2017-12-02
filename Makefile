@@ -11,3 +11,6 @@ la:
 lb:
 	python3 doofus.py 8826
 
+# add test modules after 'dfs' as they are impelemented
+test: 
+	python3 test.py dfs
