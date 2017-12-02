@@ -1,9 +1,11 @@
 ## Testing program for DooFuS
 ##
 ## TEST MODULE WRITERS, PLEASE READ:
-##      - Ensure that a succuessful test returns 1, 0 otherwise
-##      - Use traceback.print_tb to print the full trace of the exception
+##      - A test returns 1 if successful, and 0 otherwise.
+##      - Use traceback.print_tb to print the full trace of the exception.
 ##      - Catch all errors in your module so other tests will be performed!
+##      - Add your module to the main method or it won't be called.
+##
 ## to use: python3 test.py <test1> <test2> ... <testn>
 
 import sys
@@ -59,6 +61,7 @@ if __name__ == "__main__":
         if test == "dfs":
             outcome += _test_dfs()
 		
+        ## ADDITIONAL MODULES:
         #elif test == "othertestmodule":
         #	outcome += _other_test_module() 
 
