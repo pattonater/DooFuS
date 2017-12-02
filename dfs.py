@@ -1,12 +1,17 @@
 # DFS API
 # Flat
 
-# selfs:
-#  _log_name
-#  _log
+# object state:
+#  _log_name: json file name
+#  _log: json object read from file at startup, updated by all operations
+#  _UPDATE_PERIOD: how many times update needs to be called between disk writes
+#  _current_update: number of updates since last disk write
 
 import json
 
+###########################
+## DFS Class
+###########################
 class DFS:
 
     # Initializes the DFS. Reads from the log file.
@@ -28,8 +33,7 @@ class DFS:
 
     # Takes the current json instance and writes it back to disk.
     # This should be called with some regularity, but not necessarily
-    # after every operation. Perhaps we should keep some additional
-    # state to track that?
+    # after every operation.
     def _update(self):
         # Early abort if we don't want to write to disk yet
         self._current_update += 1
@@ -64,17 +68,20 @@ class DFS:
 
         
     # Removes file object from log
-    def delete_file(self, filename):    
+    def delete_file(self, filename):
+        initial_file_count = len(self._log["files"]) 
         self._log["files"][:] = [f for f in self._log["files"]
                                  if f.get("filename") != filename]
-                
-        self._update()
         
+        if len(self._log["files"]) == initial_file_count:
+            raise DFSRemoveFileError(filename)
 
-        
-#####################
+        self._update()
+
+
+###########################
 ## DFS Exceptions
-#####################
+###########################
 class DFSError(Exception):
     def __init__(self, msg):
         Exception.__init__(self, msg)
@@ -91,3 +98,8 @@ class DFSAddFileError(DFSError):
     def __init__(self, filename, uploader):
         DFSError.__init__(self, "DFS add file error: Could not add file\n"
             + "filename: " + filename + "\nuploader: " + uploader)
+
+class DFSRemoveFileError(DFSError):
+    def __init__(self, filename):
+        DFSError.__init__(self, "DFS remove file error: Could not add file\n"
+            + "filename: " + filename) 

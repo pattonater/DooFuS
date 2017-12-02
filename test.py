@@ -3,7 +3,6 @@
 ## and an unsuccesful test returns 0
 ## to use: python3 test.py <test1> <test2> ... <testn>
 
-
 import sys
 import traceback
 
@@ -19,23 +18,35 @@ def _test_dfs():
             print("Ending test.")
             return 0
 
+        # Remove and add file to DFS
         file_system.delete_file("newfile")
-
         file_system.add_file("newfile", "userA")
+
+        # Test exception-throwing
+        try:
+            file_system.delete_file("fakefile")
+            print(prefix + "ERROR: was able to \"remove\" nonexistent file.")
+            return 0
+        except dfs.DFSRemoveFileError:
+            pass 
 
         try:
             file_system.add_file("newfile", "userA")
-        
+            print(prefix + "ERROR: was able to add the same file twice.")
+            return 0
         except dfs.DFSAddFileError:
-            print(prefix + "SUCCESS")
-            return 1
+            pass
 
     except dfs.DFSError as e:
-        print(e)
+        print(prefix)
+        print traceback.print_tb(e.__traceback__)
         return 0
     except Exception as e:
         traceback.print_tb(e.__traceback__)
         return 0
+
+    print(prefix + "SUCCESS")
+    return 1
 
 
 if __name__ == "__main__":
