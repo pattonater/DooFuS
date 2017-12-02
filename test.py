@@ -12,7 +12,8 @@ import sys
 import traceback
 
 def _test_dfs():
-    import dfs
+    import modules.dfs.dfs as dfs
+    
     prefix = "DFS TEST: "
 
     try:

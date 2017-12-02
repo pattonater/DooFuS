@@ -5,11 +5,10 @@ import time
 import threading
 import urllib.request
 
-from network import Network
-from entity import Entity
-import dfs # DFS exceptions
+from modules.network.network import Network
+from modules.network.entity import Entity
+import modules.dfs.dfs as dfs # DFS exceptions
 from dfs import DFS # DFS itself
-
 
 
 local_test = False

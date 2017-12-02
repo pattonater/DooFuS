@@ -1,7 +1,7 @@
 import json
 import socket
-from entity import Entity
-from node import Node
+from .entity import Entity
+from .node import Node
 
 
 class Network:
