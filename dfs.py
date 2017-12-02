@@ -1,12 +1,17 @@
 # DFS API
 # Flat
 
-# selfs:
-#  _log_name
-#  _log
+# object state:
+#  _log_name: json file name
+#  _log: json object read from file at startup, updated by all operations
+#  _UPDATE_PERIOD: how many times update needs to be called between disk writes
+#  _current_update: number of updates since last disk write
 
 import json
 
+###########################
+## DFS Class
+###########################
 class DFS:
 
     # Initializes the DFS. Reads from the log file.
@@ -28,18 +33,17 @@ class DFS:
 
     # Takes the current json instance and writes it back to disk.
     # This should be called with some regularity, but not necessarily
-    # after every operation. Perhaps we should keep some additional
-    # state to track that?
-    def _update():
+    # after every operation.
+    def _update(self):
         # Early abort if we don't want to write to disk yet
         self._current_update += 1
-        if self._current_update < _UPDATE_PERIOD:
+        if self._current_update < self._UPDATE_PERIOD:
             return
 
         # Time to write to disk
         try:
             with open(self._log_name, 'w+') as file:
-                json.dump(self._log, self._log_name)
+                json.dump(self._log, file)
         except IOError as e:
             raise DFSIOError(e)
 
@@ -48,7 +52,7 @@ class DFS:
 
 
     # Adds file object to log object
-    def add_file(filename, uploader):
+    def add_file(self, filename, uploader):
         # Verify the file doesn't already exist (name collision)
         for f in self._log["files"]:
             if f["filename"] == filename and f["uploader"] == uploader:
@@ -64,12 +68,20 @@ class DFS:
 
         
     # Removes file object from log
-    def delete_file(filename):    
+    def delete_file(self, filename):
+        initial_file_count = len(self._log["files"]) 
         self._log["files"][:] = [f for f in self._log["files"]
                                  if f.get("filename") != filename]
-                
-        self._update()
         
+        if len(self._log["files"]) == initial_file_count:
+            raise DFSRemoveFileError(filename)
+
+        self._update()
+
+
+###########################
+## DFS Exceptions
+###########################
 class DFSError(Exception):
     def __init__(self, msg):
         Exception.__init__(self, msg)
@@ -84,4 +96,10 @@ class DFSIOError(DFSError):
 
 class DFSAddFileError(DFSError):
     def __init__(self, filename, uploader):
-        DFSError.__init__(self, "DFS add file error: Could not add file\nfilename: " + filename + "\nuploader: " + uploader)
+        DFSError.__init__(self, "DFS add file error: Could not add file\n"
+            + "filename: " + filename + "\nuploader: " + uploader)
+
+class DFSRemoveFileError(DFSError):
+    def __init__(self, filename):
+        DFSError.__init__(self, "DFS remove file error: Could not add file\n"
+            + "filename: " + filename) 

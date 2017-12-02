@@ -1,40 +1,69 @@
-## TEST SUITE FOR DOOFUS
-## Ensure that a succuessful test returns 1,
-## and an unsuccesful test returns 0
+## Testing program for DooFuS
+##
+## TEST MODULE WRITERS, PLEASE READ:
+##      - A test returns 1 if successful, and 0 otherwise.
+##      - Use traceback.print_tb to print the full trace of the exception.
+##      - Catch all errors in your module so other tests will be performed!
+##      - Add your module to the main method or it won't be called.
+##
 ## to use: python3 test.py <test1> <test2> ... <testn>
 
-
 import sys
+import traceback
 
 def _test_dfs():
     import dfs
     prefix = "DFS TEST: "
 
     try:
+        # Test DFS instatiation
         file_system = dfs.DFS("test_dfs.json")
 
-        if not file_system:
-            print(prefix + "ERROR: Failed to create file system instance.")
-            print("Ending test.")
+        # Remove and add file
+        file_system.delete_file("newfile")
+        file_system.add_file("newfile", "userA")
+
+        # Test exception-throwing
+        try:
+            # Remove non-existent file 
+            file_system.delete_file("ff")
+            print(prefix + "ERROR: was able to \"remove\" nonexistent file.")
             return 0
+        except dfs.DFSRemoveFileError:
+            pass 
 
-        print(prefix + "SUCCESS")
-        return 1
+        try:
+            # Add pre-existing file
+            file_system.add_file("newfile", "userA")
+            print(prefix + "ERROR: was able to add the same file twice.")
+            return 0
+        except dfs.DFSAddFileError:
+            pass
 
+    # All unintentional errors caught here
     except dfs.DFSError as e:
-        print(e)
+        print(prefix)
+        traceback.print_tb(e.__traceback__)
         return 0
+    except Exception as e:
+        traceback.print_tb(e.__traceback__)
+        return 0
+
+    print(prefix + "SUCCESS")
+    return 1
+
 
 if __name__ == "__main__":
     outcome = 0
 
-    for test in sys.argv[1:] :
+    for test in sys.argv[1:]:
 
-        if test.lower() == "dfs":
+        if test == "dfs":
             outcome += _test_dfs()
 		
-        #elif test.lower() == "othertest":
-        #	outcome += _other_test() 
+        ## ADDITIONAL MODULES:
+        #elif test == "othertestmodule":
+        #	outcome += _other_test_module() 
 
     result = "Success" if outcome == len(sys.argv[1:]) else "Failure"
-    print(result + ": passed " + str(outcome) + " of " + str(len(sys.argv[1:])) + " tests.")
+    print(result + ": passed " + str(outcome) + " of " + str(len(sys.argv[1:])) + " testing modules.")
