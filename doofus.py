@@ -136,6 +136,8 @@ def listen_for_nodes(listen):
             if not connected:
                 conn.close()
                 continue
+
+            # TODO mark this node as new somehow so when it gets verified know to send it stuff like DFS and verified ids
         
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, host,)).start()

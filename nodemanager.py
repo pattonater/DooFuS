@@ -48,13 +48,13 @@ class NodeManager:
         self._active.add(host)
         self._seen.add(host)
         self._nodes[host] = node
-        print("NodeManager: added %s" % (host))
+        print("NodeManager: Node %s online. Awaiting verification..." % (host))
 
     def offline(self,node):
         host = node.host()
         node.close_connection()
         self._active.remove(host)
-        print("NodeManager: removed %s" % (host))
+        print("NodeManager: %s offline" % (host))
     
     def verify(self, node, id):
         # TODO have this test (from a file presumably) whether id is appropiate
@@ -66,18 +66,16 @@ class NodeManager:
             print("NodeManager: Node %s identity verified as %s" % (host, id))
             self._verified.add(host)
             if host not in self._seen:
-                self._write_node_to_disc(host, "dweeb")
+                self._write_node_to_disc(host)
             
         else:
             print("NodeManager: Node %s identity %s not recognized" % (host, id))
-            node.close_connection()
+
             # don't call remove here because will happen automatically in the listen thread and don't want it to happen twice
             # calling close_connection speeds up that process though
+            node.close_connection()
         return verified
 
-    def active_nodes(self):
-        return [node for node in self._nodes.values() if node.is_alive()]
-    
     def inactive_hosts(self):
         return [host for host in self._seen if host not in self._active]
 
@@ -88,7 +86,7 @@ class NodeManager:
 #####################################
 
                     
-    def _write_node_to_disc(self, host, id):
+    def _write_node_to_disc(self, host):
         try:
             config = None
             # Reads out config (going to overwrite in a bit)
@@ -96,13 +94,14 @@ class NodeManager:
                 config = json.load(file)
 
             # Add the new node.
-            config["Nodes"].append({"host":host, "id":id})
+            # TODO does this really need the id, going to re-verify everytime anyway?
+            config["Nodes"].append({"host":host})
 
             # Write back to the file.
             with open('config.json', 'w+') as file:
                 json.dump(config, file)
 
-            print("Added %s (%s) to config file" % (host, id))
+            print("Added %s to config file" % (host))
 
         except Exception as e:
             print("Failed to write new node to disc. Exception: " + str(e))
