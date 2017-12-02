@@ -6,7 +6,7 @@
 ##      - Catch all errors in your module so other tests will be performed!
 ##      - Add your module to the main method or it won't be called.
 ##
-## to use: python3 test.py <test1> <test2> ... <testn>
+## To use: python3 test.py <test1> <test2> ... <testn>
 
 import sys
 import traceback
@@ -16,24 +16,23 @@ def _test_dfs():
     prefix = "DFS TEST: "
 
     try:
-        # Test DFS instatiation
+        # Test DFS instantiation
         file_system = dfs.DFS("test_dfs.json")
 
         # Remove and add file
         file_system.delete_file("newfile")
         file_system.add_file("newfile", "userA")
 
-        # Test exception-throwing
+        # Try to remove non-existent file
         try:
-            # Remove non-existent file 
             file_system.delete_file("ff")
             print(prefix + "ERROR: was able to \"remove\" nonexistent file.")
             return 0
         except dfs.DFSRemoveFileError:
             pass 
 
+        # Try to add pre-existing file
         try:
-            # Add pre-existing file
             file_system.add_file("newfile", "userA")
             print(prefix + "ERROR: was able to add the same file twice.")
             return 0

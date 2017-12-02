@@ -1,7 +1,7 @@
 # DFS API
 # Flat
 
-# object state:
+# class instance soft state:
 #  _log_name: json file name
 #  _log: json object read from file at startup, updated by all operations
 #  _UPDATE_PERIOD: how many times update needs to be called between disk writes
@@ -33,7 +33,7 @@ class DFS:
 
     # Takes the current json instance and writes it back to disk.
     # This should be called with some regularity, but not necessarily
-    # after every operation.
+    # after every operation. Frequency controlled by self._UPDATE_PERIOD
     def _update(self):
         # Early abort if we don't want to write to disk yet
         self._current_update += 1
@@ -51,7 +51,7 @@ class DFS:
         self._current_update = 0            
 
 
-    # Adds file object to log object
+    # Adds file object to _log
     def add_file(self, filename, uploader):
         # Verify the file doesn't already exist (name collision)
         for f in self._log["files"]:
@@ -67,7 +67,7 @@ class DFS:
         self._update()
 
         
-    # Removes file object from log
+    # Removes file object from _log
     def delete_file(self, filename):
         initial_file_count = len(self._log["files"]) 
         self._log["files"][:] = [f for f in self._log["files"]
