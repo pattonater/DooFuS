@@ -130,6 +130,8 @@ class Network:
     def verified(self, host):
         return host in self._verified
 
+    def get_seen_nodes(self):
+        return list(self._seen)
         
 ######################################
 ## Helper Functions

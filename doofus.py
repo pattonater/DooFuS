@@ -107,6 +107,50 @@ def listen_for_nodes(listen):
         threading.Thread(target=listen_for_messages, args=(conn, host,)).start()
 
 #########################################
+## Thread for user interaction
+#########################################
+def user_interaction():
+    print("Welcome to DooFuS.")
+    while True:
+        text = input("-> ")
+        if text == "print node list":
+            print_node_list()
+        elif text == "add file":
+            add_file()
+        elif text == "print file list":
+            print_file_list()
+        elif text == "delete file":
+            delete_file()
+        elif text == "help":
+            print_help()
+        elif text == "quit":
+            disconnect()
+
+def print_node_list():
+    seen_nodes = network.get_seen_nodes()
+    for host in seen_nodes:
+        print(host + "\t\t" + ("connected" if network.connected(host) else "not connected"))
+
+def print_file_list():
+    for file in dfs.list_files():
+        replicas = ""
+        for replica in file.replicas:
+            replicas += replica
+        print(file.filename + "\t\t Uploaded by " + uploader +
+              ("\t\t replicated on the following machines: " + replicas + "\n"))
+
+def add_file():
+    file = input("Which file would you like to upload? \n->")
+    dfs.add_file(file)
+
+def delete_file():
+    file = input("Which file would you like to delete? \n->")
+    dfs.delete_file(file)
+
+def print_help():
+    print("Commands:\n print node list\n print file list\n add file\n delete file\n quit")
+
+#########################################
 ## Startup 
 #########################################
 if __name__ == "__main__":
@@ -146,7 +190,9 @@ if __name__ == "__main__":
     # start up heatbeat thread
     threading.Thread(target=send_heartbeats).start()
 
+    # start up UI thread
+    threading.Thread(target=user_interaction).start()
 
-    # TODO handle user interaction
+
 
    

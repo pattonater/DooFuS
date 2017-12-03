@@ -13,7 +13,7 @@ import traceback
 
 def _test_dfs():
     import modules.dfs.dfs as dfs
-    
+
     prefix = "DFS TEST: "
 
     try:
@@ -41,11 +41,8 @@ def _test_dfs():
             pass
 
     # All unintentional errors caught here
-    except dfs.DFSError as e:
-        print(prefix)
-        traceback.print_tb(e.__traceback__)
-        return 0
     except Exception as e:
+        print(prefix)
         traceback.print_tb(e.__traceback__)
         return 0
 
@@ -60,7 +57,7 @@ if __name__ == "__main__":
 
         if test == "dfs":
             outcome += _test_dfs()
-		
+
         ## ADDITIONAL MODULES:
         #elif test == "othertestmodule":
         #	outcome += _other_test_module() 
