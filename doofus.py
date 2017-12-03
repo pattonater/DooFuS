@@ -18,8 +18,11 @@ ID = "r5"
 
 my_host = None
 my_port = None
+my_id = None
 
 network = None
+
+dfs = None
 
 def _get_ip():
     #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/22157882#22157882
@@ -141,14 +144,14 @@ def user_interaction():
     print("Welcome to DooFuS.")
     while True:
         text = input("-> ")
-        if text == "print node list":
+        if text == "nodes":
             print_node_list()
-        elif text == "add file":
-            add_file()
-        elif text == "print file list":
+        elif text[:3] == "add":
+            dfs.add_file(text[4:], my_id)
+        elif text == "files":
             print_file_list()
-        elif text == "delete file":
-            delete_file()
+        elif text[:6] == "delete":
+            dfs.delete_file(text[7:])
         elif text == "help":
             print_help()
         elif text == "quit":
@@ -166,26 +169,21 @@ def print_node_list():
 def print_file_list():
     for file in dfs.list_files():
         replicas = ""
-        for replica in file.replicas:
+        for replica in file.get("replicas"):
             replicas += replica
-        print(file.filename + "\t\t Uploaded by " + uploader +
-              ("\t\t replicated on the following machines: " + replicas + "\n"))
-
-def add_file():
-    file = input("Which file would you like to upload? \n->")
-    dfs.add_file(file)
-
-def delete_file():
-    file = input("Which file would you like to delete? \n->")
-    dfs.delete_file(file)
+        print(file.get("filename") + "\t\t Uploaded by " + file.get("uploader") +
+              ("\t\t replicated on: " + replicas))
 
 def print_help():
-    print("Commands:\n print node list\n print file list\n add file\n delete file\n quit")
+    print("Commands:\n nodes - print node list\n files - print file list\n add [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n quit")
 
 #########################################
 ## Startup 
 #########################################
 if __name__ == "__main__":
+    
+    dfs = DFS("test_dfs.json")
+
     local_test = len(sys.argv) > 2
 
     if local_test:
