@@ -6,6 +6,7 @@ class Node:
     # Current heartrate is 0.2/sec, so this gives us time to miss
     # at most 1 heartbeat before we consider it dead.
     TIMEOUT = 12
+    DELIMITER = "-"
     
     def __init__(self, host, port, socket):
         self._host = host
@@ -13,7 +14,6 @@ class Node:
         self._conn = socket
 
         self._last_heartbeat = time.time()
-
 
     def host(self):
         return self._host
@@ -33,10 +33,10 @@ class Node:
         return self._send_message("H")
     
     def send_id(self, id):
-        return self._send_message("ID-" + str(id))
+        return self._send_message("ID" + self.DELIMITER + str(id))
 
     def send_host(self, host):
-        return self._send_message("HOST-" + str(host))
+        return self._send_message("HOST" + self.DELIMITER + str(host))
 
     def _send_message(self, msg):
         try:
