@@ -158,8 +158,12 @@ def user_interaction():
             disconnect()
         elif text == "start":
             connect_to_network()
+        elif text[:7] == "connect":
+            network.connect_to_host(text[8:])
         elif text == "netinfo":
             network.print_all()
+        elif text == "myinfo":
+            print(my_host)
 
 def print_node_list():
     seen_nodes = network.get_seen_nodes()

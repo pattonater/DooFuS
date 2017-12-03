@@ -1,5 +1,6 @@
 import json
 import socket
+from threading import Lock
 from .entity import Entity
 from .node import Node
 from .networkconfig import NetworkConfig
@@ -21,6 +22,8 @@ class Network:
         self._config = NetworkConfig()
         self._identities = set()
 
+        self._lock = Lock()
+
         self._load_from_config()
 
     
@@ -36,14 +39,18 @@ class Network:
         print(self._identities)
 
     def startup(self):
-        for host in self._seen:
-            self.connect_to_host(host)
+        try:
+            for host in self._seen:
+                self.connect_to_host(host)
+        except RuntimeError:
+            # This is from hosts being added to _seen
+            pass
+
                 
     def connect_to_host(self, host):
         if host in self._connected:
-            print("Already connected to host... this shouldn't happen sooo")
             return False
-            
+
         print("Network: Attempting to connect to %s" % (host))
 
         try:
@@ -67,7 +74,6 @@ class Network:
 
             msg_end = "Awaiting verification..." if not host in self._verified else "Connection and verification complete!"
             print("Network: Connection to %s succeeded. %s" % (host, msg_end))
-
             return True
         except:
             print("Network: Connection to %s failed" % (host))
@@ -94,39 +100,46 @@ class Network:
                 
         return verified    
 
-
     def broadcast_heartbeats(self):
-        for host in self._connected:
-            if host in self._verified:
+        try:
+            for host in self._connected:
+                if host in self._verified:
                 
-                if self._nodes[host].send_heartbeat():
-                    print("Network: Hearbeat sent to %s" % (host))
-                else:
-                    print("Network: Heartbeat to %s failed" % (host))
-                    self.disconnect_from_host(host)
+                    if self._nodes[host].send_heartbeat():
+                        print("Network: Hearbeat sent to %s" % (host))
+                    else:
+                        print("Network: Heartbeat to %s failed" % (host))
+                        self.disconnect_from_host(host)
+        except RuntimeError:
+            # This is from _connected changing size
+            pass
 
     def record_heartbeat(self, host):
         if not host in self._nodes:
             print("can't recieve heartbeat from nonexistent node")
             return            
         self._nodes[host].record_heartbeat()
+
         
     def broadcast_host(self, new_host):
         if new_host not in self._verified:
             print("Network: Shouldn't broadcast an unverified host")
             return
 
-        print("Network: Broadcasting %s" % (new_host))
-        for host in self._connected:
-            if host in self._verified and not host == new_host:
-                self._nodes[host].send_host(new_host)
-                
+        try:
+            print("Network: Broadcasting %s" % (new_host))
+            for host in self._connected:
+                if host in self._verified and not host == new_host:
+                    self._nodes[host].send_host(new_host)
+        except RuntimeError:
+            # This is from _connected changing size
+            pass
+        
     def disconnect_from_host(self, host):
         if host in self._connected: self._connected.remove(host)
         if host in self._verified: self._verified.remove(host)
         self._nodes[host].close_connection()
         print("Network: %s offline" % (host))
-
 
     def connected(self, host):
         if not host in self._connected: return False
@@ -152,7 +165,7 @@ class Network:
     def _load_from_config(self):
         for host in self._config.hosts():
             # don't add self (for running local test)
-            if self.TESTING_MODE or not host == self._me.host:
+            if not self.TESTING_MODE and not host == self._me.host:
                 self._seen.add(host)
 
         self._identities = set(self._config.identities())
