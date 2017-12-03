@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
         if test == "dfs":
             outcome += _test_dfs()
-		
+
         ## ADDITIONAL MODULES:
         #elif test == "othertestmodule":
         #	outcome += _other_test_module() 
