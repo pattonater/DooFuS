@@ -27,6 +27,14 @@ class Network:
 ######################################
 ## NodeManager Interface
 #####################################
+    def print_all(self):
+        print(self._nodes)
+        print(self._seen)
+        print(self._new)
+        print(self._connected)
+        print(self._verified)
+        print(self._identities)
+
     def startup(self):
         for host in self._seen:
             if not host == self._me.host:
@@ -51,13 +59,10 @@ class Network:
 
             # add node to all relevant sets
             self._nodes[host] = node
-
-            if host not in self._seen:
-                self._new.add(host)
-
-            # node active, but not verified
             self._connected.add(host)
             self._seen.add(host)
+            if host not in self._seen:
+                self._new.add(host)
 
             msg_end = "Awaiting verification..." if not host in self._verified else "Connection and verification complete!"
             print("Network: Connection to %s succeeded. %s" % (host, msg_end))
@@ -68,23 +73,23 @@ class Network:
             return False
 
     def verify_host(self, host, id):
-        # TODO have this test (from a file presumably) whether id is appropiate
         verified = id in self._identities
 
         if verified:
             msg_end = "Awaiting connection..." if not host in self._connected else "Connection and verification complete!"
             print("Network: %s identity verified as %s. %s" % (host, id, msg_end))
             self._verified.add(host)
-            
+
+            # if this is a new host save it
             if (host not in self._seen or host in self._new) and not self.TESTING_MODE:
-                self._config.add_host(host)
+                self._config.store_host(host)
                 self._new.add(host)
         else:
             print("Network: %s identity %s not recognized" % (host, id))
 
             # if there is a connection get rid of it
             if host in self._nodes:
-                self._disconnect_from_host(host)
+                self.disconnect_from_host(host)
                 
         return verified    
 
@@ -97,24 +102,30 @@ class Network:
                     print("Network: Hearbeat sent to %s" % (host))
                 else:
                     print("Network: Heartbeat to %s failed" % (host))
+                    self.disconnect_from_host(host)
 
     def record_heartbeat(self, host):
         if not host in self._nodes:
-            print("can't send heartbeat to nonexistent node")
-            return
-            
+            print("can't recieve heartbeat from nonexistent node")
+            return            
         self._nodes[host].record_heartbeat()
         
     def broadcast_host(self, new_host):
         if new_host not in self._verified:
             print("Network: Shouldn't broadcast an unverified host")
             return
-        
+
         print("Network: Broadcasting %s" % (new_host))
         for host in self._connected:
             if host in self._verified and not host == new_host:
                 self._nodes[host].send_host(new_host)
-    
+                
+    def disconnect_from_host(self, host):
+        if host in self._connected: self._connected.remove(host)
+        if host in self._verified: self._verified.remove(host)
+        self._nodes[host].close_connection()
+        print("Network: %s offline" % (host))
+
 
     def connected(self, host):
         if not host in self._connected: return False
@@ -123,7 +134,7 @@ class Network:
         alive = node.is_alive()
 
         if not alive:
-            self._disconnect_from_host(host)
+            self.disconnect_from_host(host)
         
         return alive
 
@@ -136,13 +147,6 @@ class Network:
 ######################################
 ## Helper Functions
 #####################################
-
-    def _disconnect_from_host(self, host):
-        self._connected.remove(host)
-        self._verified.remove(host)
-        self._nodes[host].close_connection()
-        print("Network: %s offline" % (host))
-
 
     def _load_from_config(self):
         for host in self._config.hosts():

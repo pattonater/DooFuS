@@ -33,7 +33,8 @@ def connect_to_network():
         if local_test:
             network.connect_to_host(my_host)
         else:
-            network.startup()
+            print("Run 'startup' to attempt to join your network")
+            #network.startup()
     finally:
         print("Tried all previously seen nodes")
     
@@ -53,42 +54,69 @@ def send_heartbeats():
 #####################################
 def listen_for_messages(conn, host):    
     print("Listening to " + str(host))
-
+    
+    start_time = time.time()
     verified = False
     while True:
         msg = bytes.decode(conn.recv(1024)).split("-")
         type = msg[0]
 
+        time_to_die = False
+
+        # don't handle messages from unverified hosts
         verified = verified or network.verified(host)
         if not verified:
             if type == "ID":
-                print("Received id from %s" % (host))
-                id = msg[1] if len(msg) > 1 else "notanid"
-                verified = network.verify_host(host, id)
-                if verified:
-                    network.broadcast_host(host)                    
-                    # this host reached out to you, now connect to it
-                    if not network.connected(host):
-                        connected = network.connect_to_host(host)
-                        if not connected:
-                            # kill this thread and its connection
-                            conn.close()
-                            return
+                time_to_die = handle_id_msg(msg, host)
+            else:
+                # should kill connection if not verified within 5 seconds
+                time_to_die =  time.time() - start_time > 2        
         else:
-            # end thread if node is now offline
             if not network.connected(host):
-                print("Node %s no longer alive. Disconnecting" % (host))
-                return
-
-            if type == "H":
+                time_to_die = True
+            elif type == "H":
                 print("Recieved heartbeat from %s" % (host))
                 network.record_heartbeat(host)
             elif type == "HOST":
-                new_host = msg[1] if len(msg) > 2 else "notahost"
-                if not network.connected(new_host):
-                    print("Notified %s online by %s" % (new_host, host))
-                    network.connect_to_host(new_host)
+                time_to_die = handle_host_msg(msg, host)
+
+        # end thread and connection if node is no longer connected
+        if time_to_die:
+            print("Node %s no longer alive. Disconnecting" % (host))
+            network.disconnect_from_host(host)
+            conn.close()
+            return
+                
+    def handle_id_msg(msg, host):
+        print("Received id from %s" % (host))
+        id = msg[1] if len(msg) > 1 else None
+        
+        if not id:
+            print("Parsing error for ID message")
+            return False
+        
+        if network.verify_host(host, id):
+            network.broadcast_host(host)
             
+            # this host reached out to you, now connect to it
+            if not network.connected(host):
+                return network.connect_to_host(host)
+            
+        return True
+
+    
+    def handle_host_msg(msg, host):
+        new_host = msg[1] if len(msg) > 1 else None
+
+        if not new_host:
+            print("Parsing error for HOST message")
+            return False
+        
+        if not network.connected(new_host):
+            print("Notified %s online by %s" % (new_host, host))
+            network.connect_to_host(new_host)
+            
+        return True
 
 
 #########################################
@@ -100,12 +128,14 @@ def listen_for_nodes(listen):
     while True:
         conn, addr = listen.accept()
         host = addr[0]
-
+        network.print_all()
         print("Contacted by node at " + str(host))
         
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, host,)).start()
 
+
+        
 #########################################
 ## Thread for user interaction
 #########################################
@@ -125,6 +155,8 @@ def user_interaction():
             print_help()
         elif text == "quit":
             disconnect()
+        elif text == "start":
+            network.startup()
 
 def print_node_list():
     seen_nodes = network.get_seen_nodes()
@@ -178,7 +210,6 @@ if __name__ == "__main__":
     listen.bind((my_host, my_port))
     listen.listen()
     threading.Thread(target=listen_for_nodes, args=(listen,)).start()
-
 
     
     # attempt to connect to previously seen nodes

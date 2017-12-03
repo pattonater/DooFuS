@@ -24,13 +24,13 @@ class NetworkConfig:
     def identities(self):
         return [id for id in self._json["Identities"]]
                 
-    def add_host(self, host):
+    def store_host(self, host):
         self._json["Nodes"].append({"host":host})
         self._write_to_file()
         
         print("Added host %s to network config file" % (host))
 
-    def add_id(self, id):
+    def store_id(self, id):
         self._json["Identities"].append(id)
         self._write_to_file()
         
