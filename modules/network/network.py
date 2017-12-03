@@ -2,6 +2,7 @@ import json
 import socket
 from .entity import Entity
 from .node import Node
+from .networkconfig import NetworkConfig
 
 
 class Network:
@@ -9,13 +10,16 @@ class Network:
     TESTING_MODE = False
     
     def __init__(self, me, test):
+        self._me = me
+        self.TESTING_MODE = test
+        
         self._nodes = {}
         self._seen = set()
         self._new = set()
         self._connected = set()
         self._verified = set()
-        self._me = me
-        self.TESTING_MODE = test
+        self._config = NetworkConfig()
+        self._identities = set()
 
         self._load_from_config()
 
@@ -65,21 +69,22 @@ class Network:
 
     def verify_host(self, host, id):
         # TODO have this test (from a file presumably) whether id is appropiate
-        verified = id == "hugo"
-        
+        verified = id in self._identities
+
         if verified:
             msg_end = "Awaiting connection..." if not host in self._connected else "Connection and verification complete!"
             print("Network: %s identity verified as %s. %s" % (host, id, msg_end))
             self._verified.add(host)
             
             if (host not in self._seen or host in self._new) and not self.TESTING_MODE:
-                self._write_node_to_disc(host)
+                self._config.add_host(host)
+                self._new.add(host)
         else:
             print("Network: %s identity %s not recognized" % (host, id))
 
             # if there is a connection get rid of it
             if host in self._nodes:
-                self._disconnect_host(host)
+                self._disconnect_from_host(host)
                 
         return verified    
 
@@ -137,35 +142,11 @@ class Network:
 
 
     def _load_from_config(self):
-        file_name = 'data/config_network.json'
-        with open(file_name) as file:
-            config = json.load(file)
-            for node in config["Nodes"]:
-                host = node["host"]
+        for host in self._config.hosts():
+            # don't add self (for running local test)
+            if not host == self._me.host:
+                self._seen.add(host)
 
-                # don't add self (for testing purposes)
-                if not host == self._me.host:
-                    self._seen.add(host)
+        self._identities = set(self._config.identities())
 
                     
-    def _write_node_to_disc(self, host):
-        file_name = '/data/config_network.json'
-        try:
-            config = None
-            # Reads out config (going to overwrite in a bit)
-            with open(file_name, 'r') as file:
-                config = json.load(file)
-
-            # Add the new node.
-            # TODO does this really need the id, going to re-verify everytime anyway?
-            config["Nodes"].append({"host":host})
-
-            # Write back to the file.
-            with open(file_name, 'w+') as file:
-                json.dump(config, file)
-
-            print("Added %s to config file" % (host))
-
-        except Exception as e:
-            print("Failed to write new node to disc. Exception: " + str(e))
-
