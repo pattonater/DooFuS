@@ -19,20 +19,10 @@ class Network:
 
         self._load_from_config()
 
-    # iterate over active, verified nodes
-    def __iter__(self):
-        for host in self._nodes:
-            if host in self._connected and host in self._verified:
-                yield self._nodes[host]
-
-    def __getitem__(self, host):
-        return self._nodes[host]
     
 ######################################
 ## NodeManager Interface
 #####################################
-
-
     def startup(self):
         for host in self._seen:
             if not host == self._me.host:
@@ -40,10 +30,8 @@ class Network:
                 
     def connect_to_host(self, host):
         if host in self._connected:
+            print("Already connected to host... this shouldn't happen sooo")
             return False
-
-        if host not in self._seen:
-            print("Network: First sighting of %s" % (host))
             
         print("Network: Attempting to connect to %s" % (host))
 
@@ -67,35 +55,32 @@ class Network:
             self._connected.add(host)
             self._seen.add(host)
 
-            print("Network: Connection to %s succeeded. Awaiting verification..." % (host))
+            msg_end = "Awaiting verification..." if not host in self._verified else "Connection and verification complete!"
+            print("Network: Connection to %s succeeded. %s" % (host, msg_end))
 
             return True
         except:
             print("Network: Connection to %s failed" % (host))
             return False
 
-    def verify_identity(self, host, id):
-        if host not in self._connected:
-            print("Haven't seen this host before, nothing to verify")
-            return False
-            
+    def verify_host(self, host, id):
         # TODO have this test (from a file presumably) whether id is appropiate
         verified = id == "hugo"
         
-        node = self._nodes[host]
-
         if verified:
-            print("Network: %s identity verified as %s" % (host, id))
+            msg_end = "Awaiting connection..." if not host in self._connected else "Connection and verification complete!"
+            print("Network: %s identity verified as %s. %s" % (host, id, msg_end))
             self._verified.add(host)
-            if host in self._new and not self.TESTING_MODE:
-                self._write_node_to_disc(host)
             
+            if (host not in self._seen or host in self._new) and not self.TESTING_MODE:
+                self._write_node_to_disc(host)
         else:
             print("Network: %s identity %s not recognized" % (host, id))
 
-            # don't call remove here because will happen automatically in the listen thread and don't want it to happen twice
-            # calling close_connection speeds up that process though
-            node.close_connection()
+            # if there is a connection get rid of it
+            if host in self._nodes:
+                self._disconnect_host(host)
+                
         return verified    
 
 
@@ -117,7 +102,7 @@ class Network:
         
     def broadcast_host(self, new_host):
         if new_host not in self._verified:
-            print("Shouldn't broadcast an unverified host")
+            print("Network: Shouldn't broadcast an unverified host")
             return
         
         print("Network: Broadcasting %s" % (new_host))
@@ -133,11 +118,8 @@ class Network:
         alive = node.is_alive()
 
         if not alive:
-            self._connected.remove(host)
-            node.close_connection()
-            self._connected.remove(host)
-            print("Network: %s offline" % (host))
-
+            self._disconnect_from_host(host)
+        
         return alive
 
     def verified(self, host):
@@ -147,8 +129,16 @@ class Network:
 ######################################
 ## Helper Functions
 #####################################
+
+    def _disconnect_from_host(self, host):
+        self._connected.remove(host)
+        self._nodes[host].close_connection()
+        print("Network: %s offline" % (host))
+
+
     def _load_from_config(self):
-        with open('config_network.json') as file:
+        file_name = 'data/config_network.json'
+        with open(file_name) as file:
             config = json.load(file)
             for node in config["Nodes"]:
                 host = node["host"]
@@ -159,10 +149,11 @@ class Network:
 
                     
     def _write_node_to_disc(self, host):
+        file_name = '/data/config_network.json'
         try:
             config = None
             # Reads out config (going to overwrite in a bit)
-            with open('config_network.json', 'r') as file:
+            with open(file_name, 'r') as file:
                 config = json.load(file)
 
             # Add the new node.
@@ -170,7 +161,7 @@ class Network:
             config["Nodes"].append({"host":host})
 
             # Write back to the file.
-            with open('config.json', 'w+') as file:
+            with open(file_name, 'w+') as file:
                 json.dump(config, file)
 
             print("Added %s to config file" % (host))

@@ -8,7 +8,7 @@ import urllib.request
 from modules.network.network import Network
 from modules.network.entity import Entity
 import modules.dfs.dfs as dfs # DFS exceptions
-from dfs import DFS # DFS itself
+from modules.dfs.dfs import DFS # DFS itself
 
 
 local_test = False
@@ -54,22 +54,32 @@ def send_heartbeats():
 def listen_for_messages(conn, host):    
     print("Listening to " + str(host))
 
+    verified = False
     while True:
-        # end thread if node is now offline
-        if not network.connected(host):
-            print("Node %s no longer alive. Disconnecting" % (node.host()))
-            return
-
         msg = bytes.decode(conn.recv(1024)).split("-")
         type = msg[0]
 
-        if type == "ID":
-            print("Received id from %s" % (host))
-            id = msg[1] if len(msg) > 1 else "notanid"
-            verified = network.verify_identity(host, id)
-            if verified:
-                network.broadcast_host(host)
-        elif network.verified(host):
+        verified = verified or network.verified(host)
+        if not verified:
+            if type == "ID":
+                print("Received id from %s" % (host))
+                id = msg[1] if len(msg) > 1 else "notanid"
+                verified = network.verify_host(host, id)
+                if verified:
+                    network.broadcast_host(host)                    
+                    # this host reached out to you, now connect to it
+                    if not network.connected(host):
+                        connected = network.connect_to_host(host)
+                        if not connected:
+                            # kill this thread and its connection
+                            conn.close()
+                            return
+        else:
+            # end thread if node is now offline
+            if not network.connected(host):
+                print("Node %s no longer alive. Disconnecting" % (host))
+                return
+
             if type == "H":
                 print("Recieved heartbeat from %s" % (host))
                 network.record_heartbeat(host)
@@ -92,15 +102,6 @@ def listen_for_nodes(listen):
         host = addr[0]
 
         print("Contacted by node at " + str(host))
-
-        # if is a new node or node coming back online, connect to it
-        if not network.connected(host):
-            print("who?")
-            connected = network.connect_to_host(host)
-            if not connected:
-                # don't start up a thread to listen to this node and kill the connection
-                conn.close()
-                continue
         
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, host,)).start()
