@@ -6,7 +6,7 @@
 #  _log: json object read from file at startup, updated by all operations
 #  _UPDATE_PERIOD: how many times update needs to be called between disk writes
 #  _current_update: number of updates since last disk write
-#  _lock: lock 
+#  _lock: thread safety lock
 
 import json                 # _log, file i/o
 from threading import Lock  # _lock
@@ -18,14 +18,9 @@ class DFS:
 
     # Initializes the DFS. Reads from the log file.
     def __init__(self, log_name = None, update_period = None):
-        # How often we write to disk using _update(), since this will become
-        # fairly expensive for big file systems. When it's set to 1, it will
-        # update to disk every time _update() is called.
         self._UPDATE_PERIOD = update_period if update_period else 1
         self._current_update = 0
-        # Input json file to read dfs from
         self._log_name = log_name if log_name else "dfs.json"
-        # For thread safety
         self._lock = Lock()
 
         try:
