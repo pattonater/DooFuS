@@ -29,16 +29,15 @@ class Network:
 #####################################
     def print_all(self):
         print(self._nodes)
-        print(self._seen)
         print(self._new)
+        print(self._seen)
         print(self._connected)
         print(self._verified)
         print(self._identities)
 
     def startup(self):
         for host in self._seen:
-            if not host == self._me.host:
-                self.connect_to_host(host)
+            self.connect_to_host(host)
                 
     def connect_to_host(self, host):
         if host in self._connected:
@@ -50,7 +49,9 @@ class Network:
         try:
             # Connect to host
             # for testing locally: 8825 -> 8826 and 8826 -> 8825
-            port = 8825 + (self._me.port % 2) if self.TESTING_MODE else self.LISTEN_PORT
+            test_port = 8825 + (self._me.port % 2)
+            port = test_port if self.TESTING_MODE else self.LISTEN_PORT
+
             conn = socket.create_connection((host, port), 1)
             node = Node(host, port, conn)
 
@@ -151,7 +152,7 @@ class Network:
     def _load_from_config(self):
         for host in self._config.hosts():
             # don't add self (for running local test)
-            if not host == self._me.host:
+            if self.TESTING_MODE or not host == self._me.host:
                 self._seen.add(host)
 
         self._identities = set(self._config.identities())

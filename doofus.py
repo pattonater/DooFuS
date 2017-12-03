@@ -33,8 +33,7 @@ def connect_to_network():
         if local_test:
             network.connect_to_host(my_host)
         else:
-            print("Run 'startup' to attempt to join your network")
-            #network.startup()
+            network.startup()
     finally:
         print("Tried all previously seen nodes")
     
@@ -67,7 +66,7 @@ def listen_for_messages(conn, host):
         verified = verified or network.verified(host)
         if not verified:
             if type == "ID":
-                time_to_die = handle_id_msg(msg, host)
+                time_to_die = not handle_id_msg(msg, host)
             else:
                 # should kill connection if not verified within 5 seconds
                 time_to_die =  time.time() - start_time > 2        
@@ -78,7 +77,7 @@ def listen_for_messages(conn, host):
                 print("Recieved heartbeat from %s" % (host))
                 network.record_heartbeat(host)
             elif type == "HOST":
-                time_to_die = handle_host_msg(msg, host)
+                time_to_die = not handle_host_msg(msg, host)
 
         # end thread and connection if node is no longer connected
         if time_to_die:
@@ -87,37 +86,36 @@ def listen_for_messages(conn, host):
             conn.close()
             return
                 
-    def handle_id_msg(msg, host):
-        print("Received id from %s" % (host))
-        id = msg[1] if len(msg) > 1 else None
+def handle_id_msg(msg, host):
+    print("Received id from %s" % (host))
+    id = msg[1] if len(msg) > 1 else None
         
-        if not id:
-            print("Parsing error for ID message")
-            return False
+    if not id:
+        print("Parsing error for ID message")
+        return False
         
-        if network.verify_host(host, id):
-            network.broadcast_host(host)
+    if network.verify_host(host, id):
+        network.broadcast_host(host)
             
-            # this host reached out to you, now connect to it
-            if not network.connected(host):
-                return network.connect_to_host(host)
+        # this host reached out to you, now connect to it
+        if not network.connected(host):
+            return network.connect_to_host(host)
             
-        return True
+    return True
 
     
-    def handle_host_msg(msg, host):
-        new_host = msg[1] if len(msg) > 1 else None
+def handle_host_msg(msg, host):
+    new_host = msg[1] if len(msg) > 1 else None
 
-        if not new_host:
-            print("Parsing error for HOST message")
-            return False
+    if not new_host:
+        print("Parsing error for HOST message")
+        return False
         
-        if not network.connected(new_host):
-            print("Notified %s online by %s" % (new_host, host))
-            network.connect_to_host(new_host)
+    if not network.connected(new_host):
+        print("Notified %s online by %s" % (new_host, host))
+        network.connect_to_host(new_host)
             
-        return True
-
+    return True
 
 #########################################
 ## Thread for recieving new connections 
@@ -128,7 +126,7 @@ def listen_for_nodes(listen):
     while True:
         conn, addr = listen.accept()
         host = addr[0]
-        network.print_all()
+    #    network.print_all()
         print("Contacted by node at " + str(host))
         
         # start up a thread listening for messages from this connection
@@ -156,7 +154,9 @@ def user_interaction():
         elif text == "quit":
             disconnect()
         elif text == "start":
-            network.startup()
+            connect_to_network()
+        elif text == "netinfo":
+            network.print_all()
 
 def print_node_list():
     seen_nodes = network.get_seen_nodes()
@@ -192,7 +192,8 @@ if __name__ == "__main__":
         print("You are running in testing mode")
 
     my_host = _get_ip() if not local_test else "127.0.0.1"    
-    my_port = LISTEN_PORT if not local_test else int(sys.argv[2])
+    my_port = LISTEN_PORT if not local_test else int(sys.argv[2])        
+
     my_id = sys.argv[1]
     
     profile = Entity(my_host, my_port, my_id)
