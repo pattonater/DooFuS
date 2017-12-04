@@ -5,7 +5,6 @@ from .entity import Entity
 from .node import Node
 from .networkconfig import NetworkConfig
 
-
 class Network:
     LISTEN_PORT = 8889
     TESTING_MODE = False
@@ -28,24 +27,8 @@ class Network:
 
     
 ######################################
-## NodeManager Interface
+## Network Outgoing Interface
 #####################################
-    def print_all(self):
-        print(self._nodes)
-        print(self._new)
-        print(self._seen)
-        print(self._connected)
-        print(self._verified)
-        print(self._identities)
-
-    def startup(self):
-        try:
-            for host in self._seen:
-                self.connect_to_host(host)
-        except RuntimeError:
-            # This is from hosts being added to _seen
-            pass
-
                 
     def connect_to_host(self, host):
         if host in self._connected:
@@ -79,6 +62,67 @@ class Network:
             print("Network: Connection to %s failed" % (host))
             return False
 
+        
+    def broadcast_heartbeats(self):
+        try:
+            for host in self._connected:
+                if host in self._verified:
+                
+                    if self._nodes[host].send_heartbeat():
+                        print("Network: Hearbeat sent to %s" % (host))
+                    else:
+                        print("Network: Heartbeat to %s failed" % (host))
+                        self.disconnect_from_host(host)
+        except RuntimeError:
+            # This is from _connected changing size
+            pass
+
+        
+    def broadcast_host(self, new_host):
+        if new_host not in self._verified:
+            print("Network: Shouldn't broadcast an unverified host")
+            return
+
+        try:
+            print("Network: Broadcasting %s" % (new_host))
+            for host in self._connected:
+                if host in self._verified and not host == new_host:
+                    self._nodes[host].send_host(new_host)
+        except RuntimeError:
+            # This is from _connected changing size
+            pass
+
+    def send_dfs(self, host, files):
+        pass
+
+    def send_network_info(self, host):
+        pass
+
+
+    
+        
+######################################
+## Network Internal Interface
+#####################################
+
+    def print_all(self):
+        print(self._nodes)
+        print(self._new)
+        print(self._seen)
+        print(self._connected)
+        print(self._verified)
+        print(self._identities)
+
+                 
+    def startup(self):
+        try:
+            for host in self._seen:
+                self.connect_to_host(host)
+        except RuntimeError:
+            # This is from hosts being added to _seen
+            pass
+
+
     def verify_host(self, host, id):
         verified = id in self._identities
 
@@ -100,40 +144,12 @@ class Network:
                 
         return verified    
 
-    def broadcast_heartbeats(self):
-        try:
-            for host in self._connected:
-                if host in self._verified:
-                
-                    if self._nodes[host].send_heartbeat():
-                        print("Network: Hearbeat sent to %s" % (host))
-                    else:
-                        print("Network: Heartbeat to %s failed" % (host))
-                        self.disconnect_from_host(host)
-        except RuntimeError:
-            # This is from _connected changing size
-            pass
-
     def record_heartbeat(self, host):
         if not host in self._nodes:
             print("can't recieve heartbeat from nonexistent node")
             return            
         self._nodes[host].record_heartbeat()
 
-        
-    def broadcast_host(self, new_host):
-        if new_host not in self._verified:
-            print("Network: Shouldn't broadcast an unverified host")
-            return
-
-        try:
-            print("Network: Broadcasting %s" % (new_host))
-            for host in self._connected:
-                if host in self._verified and not host == new_host:
-                    self._nodes[host].send_host(new_host)
-        except RuntimeError:
-            # This is from _connected changing size
-            pass
         
     def disconnect_from_host(self, host):
         if host in self._connected: self._connected.remove(host)

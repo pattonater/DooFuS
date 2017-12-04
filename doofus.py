@@ -69,7 +69,7 @@ def listen_for_messages(conn, host):
         verified = verified or network.verified(host)
         if not verified:
             if type == "ID":
-                time_to_die = not handle_id_msg(msg, host)
+                time_to_die = not handle_verify_msg(msg, host)
             else:
                 # should kill connection if not verified within 5 seconds
                 time_to_die =  time.time() - start_time > 2        
@@ -81,6 +81,7 @@ def listen_for_messages(conn, host):
                 network.record_heartbeat(host)
             elif type == "HOST":
                 time_to_die = not handle_host_msg(msg, host)
+                
 
         # end thread and connection if node is no longer connected
         if time_to_die:
@@ -89,7 +90,7 @@ def listen_for_messages(conn, host):
             conn.close()
             return
                 
-def handle_id_msg(msg, host):
+def handle_verify_msg(msg, host):
     print("Received id from %s" % (host))
     id = msg[1] if len(msg) > 1 else None
         
@@ -102,7 +103,16 @@ def handle_id_msg(msg, host):
             
         # this host reached out to you, now connect to it
         if not network.connected(host):
-            return network.connect_to_host(host)
+            if not network.connect_to_host(host):
+                return False
+
+        # do other handshake shit
+        # send them your dfs info
+        files = dfs.list_files
+        network.send_dfs(host, files)
+        
+        # send them network config info (trusted ids)
+        network.send_network_info(host)
             
     return True
 
