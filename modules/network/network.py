@@ -1,10 +1,33 @@
 import json
 import socket
+import logging
+import sys
 from threading import Lock
 from .entity import Entity
 from .node import Node
 from .networkconfig import NetworkConfig
 
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
+
+h = logging.FileHandler('debug.log')
+h.setLevel(logging.NOTSET)
+h.setFormatter(formatter)
+
+h2 = logging.FileHandler('info.log')
+h2.setLevel(logging.INFO)
+h2.setFormatter(formatter)
+
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.WARNING)
+ch.setFormatter(formatter)
+
+logger.addHandler(h)
+logger.addHandler(ch)
+logger.addHandler(h2)
 
 class Network:
     LISTEN_PORT = 8889
@@ -51,7 +74,7 @@ class Network:
         if host in self._connected:
             return False
 
-        print("Network: Attempting to connect to %s" % (host))
+        logger.info("Network: Attempting to connect to %s" % (host))
 
         try:
             # Connect to host
@@ -73,10 +96,10 @@ class Network:
                 self._new.add(host)
 
             msg_end = "Awaiting verification..." if not host in self._verified else "Connection and verification complete!"
-            print("Network: Connection to %s succeeded. %s" % (host, msg_end))
+            logger.info("Network: Connection to %s succeeded. %s" % (host, msg_end))
             return True
         except:
-            print("Network: Connection to %s failed" % (host))
+            logger.info("Network: Connection to %s failed" % (host))
             return False
 
     def verify_host(self, host, id):
@@ -84,7 +107,7 @@ class Network:
 
         if verified:
             msg_end = "Awaiting connection..." if not host in self._connected else "Connection and verification complete!"
-            print("Network: %s identity verified as %s. %s" % (host, id, msg_end))
+            logger.info("Network: %s identity verified as %s. %s" % (host, id, msg_end))
             self._verified.add(host)
 
             # if this is a new host save it
@@ -92,7 +115,7 @@ class Network:
                 self._config.store_host(host)
                 self._new.add(host)
         else:
-            print("Network: %s identity %s not recognized" % (host, id))
+            logger.info("Network: %s identity %s not recognized" % (host, id))
 
             # if there is a connection get rid of it
             if host in self._nodes:
@@ -106,9 +129,9 @@ class Network:
                 if host in self._verified:
                 
                     if self._nodes[host].send_heartbeat():
-                        print("Network: Hearbeat sent to %s" % (host))
+                        logger.debug("Network: Heartbeat sent to %s" % (host))
                     else:
-                        print("Network: Heartbeat to %s failed" % (host))
+                        logger.error("Network: Heartbeat to %s failed" % (host))
                         self.disconnect_from_host(host)
         except RuntimeError:
             # This is from _connected changing size
@@ -116,18 +139,18 @@ class Network:
 
     def record_heartbeat(self, host):
         if not host in self._nodes:
-            print("can't recieve heartbeat from nonexistent node")
+            logger.error("can't recieve heartbeat from nonexistent node")
             return            
         self._nodes[host].record_heartbeat()
 
         
     def broadcast_host(self, new_host):
         if new_host not in self._verified:
-            print("Network: Shouldn't broadcast an unverified host")
+            logger.warning("Network: Shouldn't broadcast an unverified host")
             return
 
         try:
-            print("Network: Broadcasting %s" % (new_host))
+            logger.info("Network: Broadcasting %s" % (new_host))
             for host in self._connected:
                 if host in self._verified and not host == new_host:
                     self._nodes[host].send_host(new_host)
@@ -139,7 +162,7 @@ class Network:
         if host in self._connected: self._connected.remove(host)
         if host in self._verified: self._verified.remove(host)
         self._nodes[host].close_connection()
-        print("Network: %s offline" % (host))
+        logger.info("Network: %s offline" % (host))
 
     def connected(self, host):
         if not host in self._connected: return False
