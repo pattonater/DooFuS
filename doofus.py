@@ -4,6 +4,8 @@ import socket
 import time
 import threading
 import urllib.request
+import logging
+import os
 
 from modules.network.network import Network
 from modules.network.entity import Entity
@@ -24,12 +26,35 @@ network = None
 
 dfs = None
 
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
+
+h = logging.FileHandler('logs/debug.log')
+h.setLevel(logging.NOTSET)
+h.setFormatter(formatter)
+
+h2 = logging.FileHandler('logs/info.log')
+h2.setLevel(logging.INFO)
+h2.setFormatter(formatter)
+
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.WARNING)
+ch.setFormatter(formatter)
+
+logger.addHandler(h)
+logger.addHandler(ch)
+logger.addHandler(h2)
+
+
 def _get_ip():
     #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/22157882#22157882
     return urllib.request.urlopen('http://ident.me').read().decode('utf8')
             
 def connect_to_network():
-    print("Connecting to network...")
+    logger.info("Connecting to network...")
     
     # switch to reading from a json file
     try:
@@ -38,9 +63,13 @@ def connect_to_network():
         else:
             network.startup()
     finally:
-        print("Tried all previously seen nodes")
+        logger.info("Tried all previously seen nodes")
     
-    
+
+def disconnect():
+    print("Exiting DooFuS.")
+    os._exit(0)
+        
             
 ####################################
 ## Outgoing Network Communication 
@@ -55,7 +84,7 @@ def send_heartbeats():
 ## Incoming Network Communication
 #####################################
 def listen_for_messages(conn, host):    
-    print("Listening to " + str(host))
+    logger.info("Listening to " + str(host))
     
     start_time = time.time()
     verified = False
@@ -77,7 +106,7 @@ def listen_for_messages(conn, host):
             if not network.connected(host):
                 time_to_die = True
             elif type == "H":
-                print("Recieved heartbeat from %s" % (host))
+                logger.debug("Received heartbeat from %s" % (host))
                 network.record_heartbeat(host)
             elif type == "HOST":
                 time_to_die = not handle_host_msg(msg, host)
@@ -85,17 +114,18 @@ def listen_for_messages(conn, host):
 
         # end thread and connection if node is no longer connected
         if time_to_die:
-            print("Node %s no longer alive. Disconnecting" % (host))
+            logger.info("Node %s no longer alive. Disconnecting" % (host))
             network.disconnect_from_host(host)
             conn.close()
             return
                 
 def handle_verify_msg(msg, host):
-    print("Received id from %s" % (host))
+    logger.info("Received id from %s" % (host))
+    
     id = msg[1] if len(msg) > 1 else None
         
     if not id:
-        print("Parsing error for ID message")
+        logger.error("Parsing error for ID message")
         return False
         
     if network.verify_host(host, id):
@@ -121,11 +151,11 @@ def handle_host_msg(msg, host):
     new_host = msg[1] if len(msg) > 1 else None
 
     if not new_host:
-        print("Parsing error for HOST message")
+        logger.error("Parsing error for HOST message")
         return False
         
     if not network.connected(new_host):
-        print("Notified %s online by %s" % (new_host, host))
+        logger.info("Notified %s online by %s" % (new_host, host))
         network.connect_to_host(new_host)
             
     return True
@@ -135,12 +165,11 @@ def handle_host_msg(msg, host):
 #########################################
 def listen_for_nodes(listen):
     # start accepting new connections
-    print("Listening...")
+    logger.info("Listening...")
     while True:
         conn, addr = listen.accept()
         host = addr[0]
-    #    network.print_all()
-        print("Contacted by node at " + str(host))
+        logger.info("Contacted by node at " + str(host))
         
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, host,)).start()
@@ -166,7 +195,7 @@ def user_interaction():
             print_help()
         elif text == "quit":
             disconnect()
-        elif text == "start":
+        elif text == "join":
             connect_to_network()
         elif text[:7] == "connect":
             network.connect_to_host(text[8:])
@@ -213,7 +242,7 @@ if __name__ == "__main__":
     network = Network(profile, local_test)
     
     # hello
-    print("Starting up")
+    logger.info("Starting up")
 
     listen = socket.socket()
 
