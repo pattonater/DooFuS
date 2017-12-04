@@ -154,8 +154,7 @@ class Network:
     def disconnect_from_host(self, host):
         if host in self._connected: self._connected.remove(host)
         if host in self._verified: self._verified.remove(host)
-        self._nodes[host].close_connection()
-        print("Network: %s offline" % (host))
+        if host in self._nodes: self._nodes[host].close_connection()
 
     def connected(self, host):
         if not host in self._connected: return False
