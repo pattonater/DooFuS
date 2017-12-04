@@ -168,15 +168,16 @@ def user_interaction():
 def print_node_list():
     seen_nodes = network.get_seen_nodes()
     for host in seen_nodes:
-        print(host + "\t\t" + ("connected" if network.connected(host) else "not connected"))
+ #TODO test for hosts longer than 25 char
+        print(host.ljust(25) + ("connected" if network.connected(host) else "not connected"))
+
 
 def print_file_list():
     for file in dfs.list_files():
-        replicas = ""
-        for replica in file.get("replicas"):
-            replicas += replica
-        print(file.get("filename") + "\t\t Uploaded by " + file.get("uploader") +
-              ("\t\t replicated on: " + replicas))
+#TODO test for long file and uploader names
+        print(file.get("filename").ljust(25) + "Uploaded by " + file.get("uploader").ljust(25) +
+              ("Replicated on " + (', '.join(str(replica) for replica in file.get("replicas")))))
+
 
 def print_help():
     print("Commands:\n nodes - print node list\n files - print file list\n add [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n quit")
