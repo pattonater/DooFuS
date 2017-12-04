@@ -22,7 +22,11 @@ def _test_dfs():
 
         # Remove and add file
         file_system.delete_file("newfile")
+        ls = file_system.list_files()
         file_system.add_file("newfile", "userA")
+        if len(ls) == len(file_system.list_files()):
+           print(prefix + "ERROR: list_files() did not reflect change in file list")
+           return 0
 
         # Try to remove non-existent file
         try:

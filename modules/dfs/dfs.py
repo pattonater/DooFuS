@@ -10,6 +10,7 @@
 
 import json                 # _log, file i/o
 from threading import Lock  # _lock
+from copy import deepcopy   # for returning copy of _log 
 
 ###########################
 ## DFS Class
@@ -30,7 +31,7 @@ class DFS:
             # Instantiating new file
             self._log = {"files" : []}
             self.update_disk()
-            
+
 
     # Takes the current json instance and writes it back to disk.
     # This should be called with some regularity, but not necessarily
@@ -61,6 +62,7 @@ class DFS:
         # Verify the file doesn't already exist (name collision)
         for f in self._log["files"]:
             if f["filename"] == filename and f["uploader"] == uploader:
+                self._lock.release()
                 raise DFSAddFileError(filename, uploader)                
         
         # No name collision. Add file
@@ -82,15 +84,20 @@ class DFS:
                                  if f.get("filename") != filename]
         
         if len(self._log["files"]) == initial_file_count:
+            self._lock.release()
             raise DFSRemoveFileError(filename)
 
         self._update()
 
         self._lock.release()
 
+    # returns the DFS
+    def return_log(self):
+        return deepcopy(self._log)
+
     # Returns list of files
     def list_files(self):
-        return self._log["files"]
+        return deepcopy(self._log["files"])
 
     # Forces a write to disk
     def update_disk(self):
