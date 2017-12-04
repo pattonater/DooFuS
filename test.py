@@ -14,7 +14,7 @@ import traceback
 def _test_dfs():
     import modules.dfs.dfs as dfs
 
-    prefix = "DFS TEST: "
+    prefix = "DFS test: "
 
     try:
         # Test DFS instantiation
@@ -22,7 +22,11 @@ def _test_dfs():
 
         # Remove and add file
         file_system.delete_file("newfile")
+        ls = file_system.list_files()
         file_system.add_file("newfile", "userA")
+        if len(ls) == len(file_system.list_files()):
+           print(prefix + "ERROR: list_files() did not reflect change in file list")
+           return 0
 
         # Try to remove non-existent file
         try:
@@ -42,13 +46,26 @@ def _test_dfs():
 
     # All unintentional errors caught here
     except Exception as e:
-        print(prefix)
+        print(prefix + str(e))
         traceback.print_tb(e.__traceback__)
         return 0
 
     print(prefix + "SUCCESS")
     return 1
 
+def _test_Msg_abstraction():
+    prefix = "Msg abstraction test: "
+    try:
+        from modules.network.msg import Msg
+        if not Msg.VERIFY == "V":
+            return 0
+
+        return 1
+
+    except Exception as e:
+        print(prefix + str(e))
+        traceback.print_tb(e.__traceback__)
+        return 0
 
 if __name__ == "__main__":
     outcome = 0
@@ -57,6 +74,9 @@ if __name__ == "__main__":
 
         if test == "dfs":
             outcome += _test_dfs()
+
+        if test == "Msg":
+            outcome += _test_Msg_abstraction()
 
         ## ADDITIONAL MODULES:
         #elif test == "othertestmodule":
