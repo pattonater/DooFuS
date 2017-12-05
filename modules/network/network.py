@@ -25,8 +25,8 @@ ch.setLevel(logging.WARNING)
 ch.setFormatter(formatter)
 
 logger.addHandler(h)
-logger.addHandler(ch)
 logger.addHandler(h2)
+logger.addHandler(ch)
 
 class Network:
     LISTEN_PORT = 8889
@@ -194,6 +194,19 @@ class Network:
 
     def get_seen_nodes(self):
         return list(self._seen)
+
+
+    def toggle_debug(self):
+        if (logger.handlers[2].level != logging.DEBUG):
+            ch.setLevel(logging.DEBUG)
+        else:
+            ch.setLevel(logging.WARNING)
+
+    def toggle_info(self):
+        if (logger.handlers[2].level != logging.INFO):
+            ch.setLevel(logging.INFO)
+        else:
+            ch.setLevel(logging.WARNING)
 
 ######################################
 ## Helper Functions

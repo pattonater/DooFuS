@@ -45,8 +45,8 @@ ch.setLevel(logging.WARNING)
 ch.setFormatter(formatter)
 
 logger.addHandler(h)
-logger.addHandler(ch)
 logger.addHandler(h2)
+logger.addHandler(ch)
 
 def _get_ip():
     #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/
@@ -220,6 +220,12 @@ def user_interaction():
             print("I don't know how")
         elif text == "refresh":
             print("I don't know how")
+        elif text == "debug":
+            toggle_debug()
+            network.toggle_debug()
+        elif text == "info":
+            toggle_info()
+            network.toggle_info()
 
 def print_node_list():
     seen_nodes = network.get_seen_nodes()
@@ -234,8 +240,25 @@ def print_file_list():
               ("Replicated on " + (', '.join(str(replica) for replica in file.get("replicas")))))
 
 def print_help():
-    print("Commands:\n nodes - print node list\n files - print file list\n upload [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n join\n connect [host_name]\n myinfo\n verify [user_id]\n refresh\n quit")
+    print("Commands:\n nodes - print node list\n files - print file list\n upload [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n join\n connect [host_name]\n myinfo - print ip addr and userid\n verify [user_id]\n refresh\n debug - toggle debugging mode\n info - toggle info mode\n quit")
 
+def toggle_debug():
+    if logger.handlers[2].level != logging.DEBUG:
+        ch.setLevel(logging.DEBUG)
+        logger.info("Starting debugging")
+    else:
+        logger.info("Stopping debugging")
+        ch.setLevel(logging.WARNING)
+
+
+def toggle_info():
+    if logger.handlers[2].level != logging.INFO:
+        ch.setLevel(logging.INFO)
+        logger.info("Starting to print INFO")
+    else:
+        logger.info("Stopping printing of INFO")
+        ch.setLevel(logging.WARNING)
+    
 #########################################
 ## Startup
 #########################################
