@@ -9,6 +9,9 @@ class MessageTags:
     REMOVE      = "R"
     AUTHORIZED  = "A"
     DFS         = "D"
+    FILE        = "F"
+    EOF         = "E"
+    CHUNK       = "C"
 
     DELIMITER   = "~"
 

@@ -123,6 +123,13 @@ class Network:
     def send_dfs(self, files, host):
         pass
 
+    def send_file(self, host, file_name):
+        if not self.connected(host):
+            print("Tried to send file to disconnected host")
+            return
+        
+        self._nodes[host].send_file(file_name)
+    
     def send_network_info(self, host):
         if not host in self._nodes:
             return
@@ -195,6 +202,8 @@ class Network:
     def get_seen_nodes(self):
         return list(self._seen)
 
+    def get_connected_nodes(self):
+        return list(self._connected)
 
     def toggle_debug(self):
         if (logger.handlers[2].level != logging.DEBUG):
