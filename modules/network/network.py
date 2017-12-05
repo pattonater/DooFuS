@@ -78,8 +78,10 @@ class Network:
             if host not in self._seen:
                 self._new.add(host)
 
-            msg_end = "Awaiting verification..." if not host in self._verified else "Connection and verification complete!"
-            logger.info("Network: Connection to %s succeeded. %s" % (host, msg_end))
+            if host in self._verified:
+                print("Connected to %s" % (host))
+            else:
+                logger.info("Network: Connection to %s succeeded. Awaiting verification..." % (host))
             return True
         except:
             logger.info("Network: Connection to %s failed" % (host))
@@ -160,8 +162,11 @@ class Network:
         verified = id in self._authorized
 
         if verified:
-            msg_end = "Awaiting connection..." if not host in self._connected else "Connection and verification complete!"
-            logger.info("Network: %s identity verified as %s. %s" % (host, id, msg_end))
+            if host in self._connected:                
+                print("Connected to %s" % (host))
+            else:
+                logger.info("Network: %s identity verified as %s. Awaiting connection..." % (host, id))
+                
             self._verified.add(host)
 
             # if this is a new host save it

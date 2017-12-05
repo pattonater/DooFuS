@@ -90,7 +90,7 @@ def listen_for_messages(conn, host):
     while True:
         # end thread and connection if one of messages failed is no longer connected (and once was)
         if time_to_die:
-            logger.info("Node %s no longer alive. Disconnecting" % (host))
+            print("Node %s no longer alive. Disconnecting" % (host))
             network.disconnect_from_host(host)
             conn.close()
             return
