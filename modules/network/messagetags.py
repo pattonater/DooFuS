@@ -10,6 +10,6 @@ class MessageTags:
     AUTHORIZED  = "A"
     DFS         = "D"
 
-    DELIM       = "~"
+    DELIMITER   = "~"
 
     #def valid_tag(self, message):

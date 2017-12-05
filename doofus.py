@@ -97,13 +97,13 @@ def listen_for_messages(conn, host):
         type = bytes.decode(conn.recv(1))
 
         if type:
-            # determine the size of the message
+            # try to determine the size of the message
             size = ""
             max_digits = 10
             num_digits = 0
             while True:
                 digit = bytes.decode(conn.recv(1))
-                if digit == MessageTags.DELIM:
+                if digit == MessageTags.DELIMITER:
                     break
                 size += digit
 
@@ -114,14 +114,15 @@ def listen_for_messages(conn, host):
                     break
 
             if size:
-                # recieve the rest of the message
+                # recieve the rest of the message (the actual data)
                 size = int(size)
                 msg = bytes.decode(conn.recv(size))
 
-        # handle the message
+
         verified = verified or network.verified(host)
         well_formatted = type and msg # and MessageTags.valid_tag(type)
-
+        
+        # handle the actual message
         if not verified:
                 # don't handle any messages from unverified hosts except verify
                 if type == MessageTags.VERIFY:
@@ -132,6 +133,7 @@ def listen_for_messages(conn, host):
                     time_to_die =  time.time() - start_time > 2
         else:
             if not network.connected(host):
+                # this is where we will see when the connection should die mostly
                 time_to_die = True
             elif well_formatted:
                 # got an actual message
@@ -146,7 +148,7 @@ def listen_for_messages(conn, host):
                     handle_authorized_msg(msg)
 
 def handle_authorized_msg(msg):
-    ids = msg.split(MessageTags.DELIM)
+    ids = msg.split(MessageTags.DELIMITER)
     # TODO send them to network to store
 
 def handle_verify_msg(id, host):
@@ -175,7 +177,7 @@ def handle_host_msg(new_host, host):
         network.connect_to_host(new_host)
 
 #########################################
-## Thread for recieving new connections
+## Thread for recieving new 1;5B1;5Bconnections
 #########################################
 def listen_for_nodes(listen):
     # start accepting new connections

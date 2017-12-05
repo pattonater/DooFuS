@@ -68,7 +68,7 @@ class Node:
     def _send_message(self, tag, data):
         self._lock.acquire()
         try:
-            msg = self.data_str(tag, data)
+            msg = self.data_str(tag, data)1;5B1;5B
             self._conn.send(str.encode(msg))
         except:
             self._lock.release()
@@ -81,6 +81,6 @@ class Node:
     def data_str(self, tag, data):
         data_str = ""
         for item in data:
-            data_str += MessageTags.DELIM + str(item)
+            data_str += MessageTags.DELIMITER + str(item)
         msg = tag + str(len(data_str) - 1) + data_str
         return msg
