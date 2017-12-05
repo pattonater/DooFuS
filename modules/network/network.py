@@ -121,7 +121,7 @@ class Network:
             # This is from _connected changing size
             pass
 
-    def send_dfs(self, host, files):
+    def send_dfs(self, files, host):
         pass
 
     def send_network_info(self, host):
