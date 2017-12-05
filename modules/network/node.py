@@ -69,7 +69,6 @@ class Node:
         self._lock.acquire()
         try:
             msg = self.data_str(tag, data)
-            print("Sending message %s" % (msg))
             self._conn.send(str.encode(msg))
         except:
             self._lock.release()

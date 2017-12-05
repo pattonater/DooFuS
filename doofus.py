@@ -88,7 +88,6 @@ def listen_for_messages(conn, host):
     while True:
         # end thread and connection if one of messages failed is no longer connected (and once was)
         if time_to_die:
-            print("Disconnect from %s" % (host))
             logger.info("Node %s no longer alive. Disconnecting" % (host))
             network.disconnect_from_host(host)
             conn.close()
@@ -136,7 +135,7 @@ def listen_for_messages(conn, host):
                 time_to_die = True
             elif well_formatted:
                 # got an actual message
-                print("got message %s%d~%s" % (type,size,msg))
+                logger.debug("got message %s%d~%s" % (type,size,msg))
 
                 if type == MessageTags.HEARTBEAT:
                     logger.debug("Received heartbeat from %s" % (host))

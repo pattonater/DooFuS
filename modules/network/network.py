@@ -89,7 +89,7 @@ class Network:
         if host in self._connected: self._connected.remove(host)
         if host in self._verified: self._verified.remove(host)
         if host in self._nodes: self._nodes[host].close_connection()
-        logger.info("Network: %s offline" % (host))
+        logger.info("Network: %s disconnected" % (host))
 
 
     def broadcast_heartbeats(self):
