@@ -66,7 +66,7 @@ def connect_to_network():
         logger.info("Tried all previously seen nodes")
 
 
-def disconnect():
+def exit():
     print("Exiting DooFuS.")
     os._exit(0)
 
@@ -152,10 +152,6 @@ def listen_for_messages(conn, host):
 def handle_verify_msg(id, host):
     logger.info("Received id from %s" % (host))
 
-    if not id:
-        logger.error("Parsing error for VERIFY message")
-        return False
-
     if network.verify_host(host, id):
         network.broadcast_host(host)
 
@@ -176,11 +172,6 @@ def handle_verify_msg(id, host):
 
 
 def handle_host_msg(new_host, host):
-
-    # if not new_host:
-    #     logger.error("Parsing error for HOST message")
-    #     return False
-
     if not network.connected(new_host):
         logger.info("Notified %s online by %s" % (new_host, host))
         network.connect_to_host(new_host)
@@ -211,8 +202,8 @@ def user_interaction():
         text = input("-> ")
         if text == "nodes":
             print_node_list()
-        elif text[:3] == "add":
-            dfs.add_file(text[4:], my_id)
+        elif text.startswith("upload"):
+            dfs.add_file(text[6:], my_id)
         elif text == "files":
             print_file_list()
         elif text[:6] == "delete":
@@ -220,32 +211,36 @@ def user_interaction():
         elif text == "help":
             print_help()
         elif text == "quit":
-            disconnect()
+            exit()
         elif text == "join":
             connect_to_network()
-        elif text[:7] == "connect":
+        elif text.startswith("connect"):
             network.connect_to_host(text[8:])
         elif text == "netinfo":
             network.print_all()
         elif text == "myinfo":
-            print(my_host)
+            print("%s as %s" % (my_host, my_id))
+        elif text.startswith("verify"):
+            print("I don't know how")
+        elif text == "refresh":
+            print("I don't know how")
 
 def print_node_list():
     seen_nodes = network.get_seen_nodes()
     for host in seen_nodes:
- #TODO test for hosts longer than 25 char
+        #TODO test for hosts longer than 25 char
         print(host.ljust(25) + ("connected" if network.connected(host) else "not connected"))
 
 
 def print_file_list():
     for file in dfs.list_files():
-#TODO test for long file and uploader names
+        #TODO test for long file and uploader names
         print(file.get("filename").ljust(25) + "Uploaded by " + file.get("uploader").ljust(25) +
               ("Replicated on " + (', '.join(str(replica) for replica in file.get("replicas")))))
 
 
 def print_help():
-    print("Commands:\n nodes - print node list\n files - print file list\n add [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n quit")
+    print("Commands:\n nodes - print node list\n files - print file list\n upload [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n join\n connect [host_name]\n myinfo\n verify [user_id]\n refresh\n quit")
 
 #########################################
 ## Startup
