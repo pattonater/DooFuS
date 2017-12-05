@@ -50,24 +50,25 @@ class Node:
     # Sends single byte message as heartbeat to host. Primarily used to test
     # the connection; if it doesn't go through, we assume the host is down.
     def send_heartbeat(self):
-        msg = MessageTags.HEARTBEAT + "2" + MessageTags.DELIM + "hi"
-        return self._send_message(msg)
+        return self._send_message(MessageTags.HEARTBEAT, ["hi"])
 
     # Identifies self to host
-    def send_id(self, id):
-        msg = MessageTags.VERIFY + str(len(id)) + MessageTags.DELIM + str(id)
-        return self._send_message(msg)
+    def send_verification(self, id):
+        return self._send_message(MessageTags.VERIFY, [id])
 
     # Sends new node information to host
     def send_host(self, host):
-        msg = MessageTags.HOST + str(len(host)) + MessageTags.DELIMITER + str(host)
-        return self._send_message(msg)
+        return self._send_message(MessageTags.HOST, [host])
+
+    def send_verified_ids(self, ids):
+        return self._send_message(MessageTags.AUTHORIZED, ids)
 
     # Since network.py will theoretically be sending heartbeats and other messages on different
     # threads (but on the same port), it's important to lock around the
-    def _send_message(self, msg):
+    def _send_message(self, tag, data):
         self._lock.acquire()
         try:
+            msg = self.data_str(tag, data)
             print("Sending message %s" % (msg))
             self._conn.send(str.encode(msg))
         except:
@@ -76,3 +77,11 @@ class Node:
 
         self._lock.release()
         return True
+
+
+    def data_str(self, tag, data):
+        data_str = ""
+        for item in data:
+            data_str += MessageTags.DELIM + str(item)
+        msg = tag + str(len(data_str) - 1) + data_str
+        return msg

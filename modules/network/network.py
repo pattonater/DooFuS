@@ -31,28 +31,28 @@ logger.addHandler(h2)
 class Network:
     LISTEN_PORT = 8889
     TESTING_MODE = False
-    
+
     def __init__(self, me, test):
         self._me = me
         self.TESTING_MODE = test
-        
+
         self._nodes = {}
         self._seen = set()
         self._new = set()
         self._connected = set()
         self._verified = set()
         self._config = NetworkConfig()
-        self._identities = set()
+        self._authorized = set()
 
         self._lock = Lock()
 
         self._load_from_config()
 
-    
+
 ######################################
 ## Network Outgoing Interface
 #####################################
-                
+
     def connect_to_host(self, host):
         if host in self._connected:
             return False
@@ -69,7 +69,7 @@ class Network:
             node = Node(host, port, conn)
 
             # send host your credentials
-            node.send_id(self._me.id)
+            node.send_verification(self._me.id)
 
             # add node to all relevant sets
             self._nodes[host] = node
@@ -96,7 +96,6 @@ class Network:
         try:
             for host in self._connected:
                 if host in self._verified:
-                
                     if self._nodes[host].send_heartbeat():
                         logger.debug("Network: Heartbeat sent to %s" % (host))
                     else:
@@ -106,7 +105,7 @@ class Network:
             # This is from _connected changing size
             pass
 
-        
+
     def broadcast_host(self, new_host):
         if new_host not in self._verified:
             logger.warning("Network: Shouldn't broadcast an unverified host")
@@ -125,24 +124,25 @@ class Network:
         pass
 
     def send_network_info(self, host):
-        pass
+        if not host in self._nodes:
+            return
 
+        node = self._nodes[host]
+        node.send_verified_ids(list(self._authorized))
 
-    
-        
+        # send hosts
+
 ######################################
 ## Network Internal Interface
 #####################################
-
     def print_all(self):
         print(self._nodes)
         print(self._new)
         print(self._seen)
         print(self._connected)
         print(self._verified)
-        print(self._identities)
+        print(self._authorized)
 
-                 
     def startup(self):
         try:
             for host in self._seen:
@@ -152,7 +152,7 @@ class Network:
             pass
 
     def verify_host(self, host, id):
-        verified = id in self._identities
+        verified = id in self._authorized
 
         if verified:
             msg_end = "Awaiting connection..." if not host in self._connected else "Connection and verification complete!"
@@ -169,24 +169,24 @@ class Network:
             # if there is a connection get rid of it
             if host in self._nodes:
                 self.disconnect_from_host(host)
-                
-        return verified    
-    
+
+        return verified
+
     def record_heartbeat(self, host):
         if not host in self._nodes:
             logger.error("can't recieve heartbeat from nonexistent node")
-            return            
+            return
         self._nodes[host].record_heartbeat()
 
     def connected(self, host):
         if not host in self._connected: return False
-        
+
         node = self._nodes[host]
         alive = node.is_alive()
 
         if not alive:
             self.disconnect_from_host(host)
-        
+
         return alive
 
     def verified(self, host):
@@ -194,7 +194,7 @@ class Network:
 
     def get_seen_nodes(self):
         return list(self._seen)
-        
+
 ######################################
 ## Helper Functions
 #####################################
@@ -205,6 +205,4 @@ class Network:
             if not self.TESTING_MODE and not host == self._me.host:
                 self._seen.add(host)
 
-        self._identities = set(self._config.identities())
-
-                    
+        self._authorized = set(self._config.identities())

@@ -4,8 +4,10 @@ class MessageTags:
     HEARTBEAT   = "H"
     HOST        = "T"
     VERIFY      = "V"
-    JOIN        = "J"
-    FILE        = "F"
+    JOIN        = "J" #???
+    UPLOAD      = "U"
+    REMOVE      = "R"
+    AUTHORIZED  = "A"
     DFS         = "D"
 
     DELIM       = "~"

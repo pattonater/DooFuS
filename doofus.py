@@ -48,7 +48,6 @@ logger.addHandler(h)
 logger.addHandler(ch)
 logger.addHandler(h2)
 
-
 def _get_ip():
     #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/
     return urllib.request.urlopen('http://ident.me').read().decode('utf8')
@@ -65,11 +64,9 @@ def connect_to_network():
     finally:
         logger.info("Tried all previously seen nodes")
 
-
 def exit():
     print("Exiting DooFuS.")
     os._exit(0)
-
 
 ####################################
 ## Outgoing Network Threads
@@ -78,7 +75,6 @@ def send_heartbeats():
     while True:
         time.sleep(5)
         network.broadcast_heartbeats()
-
 
 #####################################
 ## Incoming Network Communication
@@ -147,7 +143,12 @@ def listen_for_messages(conn, host):
                     network.record_heartbeat(host)
                 elif type == MessageTags.HOST:
                     handle_host_msg(msg, host)
+                elif type == MessageTags.AUTHORIZED:
+                    handle_authorized_msg(msg)
 
+def handle_authorized_msg(msg):
+    ids = msg.split(MessageTags.DELIM)
+    # TODO send them to network to store
 
 def handle_verify_msg(id, host):
     logger.info("Received id from %s" % (host))
@@ -167,15 +168,12 @@ def handle_verify_msg(id, host):
 
         # send them network config info (trusted ids)
         network.send_network_info(host)
-
     return True
-
 
 def handle_host_msg(new_host, host):
     if not network.connected(new_host):
         logger.info("Notified %s online by %s" % (new_host, host))
         network.connect_to_host(new_host)
-
 
 #########################################
 ## Thread for recieving new connections
@@ -190,8 +188,6 @@ def listen_for_nodes(listen):
 
         # start up a thread listening for messages from this connection
         threading.Thread(target=listen_for_messages, args=(conn, host,)).start()
-
-
 
 #########################################
 ## Thread for user interaction
@@ -231,13 +227,11 @@ def print_node_list():
         #TODO test for hosts longer than 25 char
         print(host.ljust(25) + ("connected" if network.connected(host) else "not connected"))
 
-
 def print_file_list():
     for file in dfs.list_files():
         #TODO test for long file and uploader names
         print(file.get("filename").ljust(25) + "Uploaded by " + file.get("uploader").ljust(25) +
               ("Replicated on " + (', '.join(str(replica) for replica in file.get("replicas")))))
-
 
 def print_help():
     print("Commands:\n nodes - print node list\n files - print file list\n upload [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n join\n connect [host_name]\n myinfo\n verify [user_id]\n refresh\n quit")
