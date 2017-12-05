@@ -85,3 +85,24 @@ class Node:
             data_str += MessageTags.DELIM + str(item)
         msg = tag + str(len(data_str) - 1) + data_str
         return msg
+
+    def send_file(self, file_name):
+        # read file in binary mode
+        file = open("files/" + file_name, "rb")
+
+        print("Sending file " + file_name +  " to " + self._host) 
+        self._send_message(MessageTags.FILE, [file_name])
+
+        while True:
+            #TODO change chunk size and make constant
+            chunk = file.read(8)
+            print ("Sending chunk: " + bytes.decode(chunk))
+            if not chunk:
+                break  # EOF
+            
+            self._send_message(MessageTags.CHUNK, [file_name, bytes.decode(chunk)])
+
+        self._send_message(MessageTags.EOF, [file_name])
+
+        print("Finished sending " + file_name)
+        file.close()

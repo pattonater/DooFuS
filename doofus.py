@@ -13,6 +13,7 @@ from modules.network.entity import Entity
 import modules.dfs.dfs as dfs # DFS exceptions
 from modules.dfs.dfs import DFS # DFS itself
 
+from modules.filewriter.filewriter import Filewriter # writes files
 
 local_test = False
 
@@ -26,6 +27,7 @@ network = None
 
 dfs = None
 
+filewriter = None
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -145,6 +147,27 @@ def listen_for_messages(conn, host):
                     handle_host_msg(msg, host)
                 elif type == MessageTags.AUTHORIZED:
                     handle_authorized_msg(msg)
+                elif type == MessageTags.FILE:
+                    handle_file(msg, host)
+                elif type == MessageTags.CHUNK:
+                    handle_chunk(msg)
+                elif type == MessageTags.EOF:
+                    handle_EOF(msg)
+
+def handle_file(filename, host):
+    print("Receiving file " + filename + " from " + host)
+    # prepend to filename if testing locally
+    filewriter.add_file(filename)
+
+def handle_chunk(msg):
+    msglist = msg.split(MessageTags.DELIM)
+    filename = msglist[0]
+    chunk = msglist[1]
+    filewriter.add_chunk(filename, chunk)
+
+def handle_EOF(filename):
+    print("End of file " + filename)
+    filewriter.write(filename)
 
 def handle_authorized_msg(msg):
     ids = msg.split(MessageTags.DELIM)
@@ -199,7 +222,7 @@ def user_interaction():
         if text == "nodes":
             print_node_list()
         elif text.startswith("upload"):
-            dfs.add_file(text[6:], my_id)
+            add_file(text[7:])
         elif text == "files":
             print_file_list()
         elif text[:6] == "delete":
@@ -227,17 +250,38 @@ def user_interaction():
             toggle_info()
             network.toggle_info()
 
+def add_file(filename):
+
+    for file in dfs.list_files():
+        if file.get("filename") == filename:
+            print("File already exists. Delete the current version or choose a new name.")
+            return
+    
+    # send to everyone
+    for host in network.get_connected_nodes():
+        network.send_file(host, filename)
+
+    # add to dfs TODO add replicas
+    dfs.add_file(filename, my_id)
+
+
 def print_node_list():
     seen_nodes = network.get_seen_nodes()
     for host in seen_nodes:
-        #TODO test for hosts longer than 25 char
+        host = truncate(host, 22)
         print(host.ljust(25) + ("connected" if network.connected(host) else "not connected"))
 
 def print_file_list():
     for file in dfs.list_files():
-        #TODO test for long file and uploader names
-        print(file.get("filename").ljust(25) + "Uploaded by " + file.get("uploader").ljust(25) +
-              ("Replicated on " + (', '.join(str(replica) for replica in file.get("replicas")))))
+        filename = truncate(file.get("filename"), 22)
+        uploader = truncate(file.get("uploader"), 22)
+        print(filename.ljust(25) + "Uploaded by " + uploader.ljust(25) + "Replicated on " + (', '.join(str(replica) for replica in file.get("replicas"))))
+
+# cuts off the end of the text for better formatting
+def truncate(text, length):
+    if len(text) > length:
+        return text[:(length-3)] + "..."
+    return text
 
 def print_help():
     print("Commands:\n nodes - print node list\n files - print file list\n upload [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n join\n connect [host_name]\n myinfo - print ip addr and userid\n verify [user_id]\n refresh\n debug - toggle debugging mode\n info - toggle info mode\n quit")
@@ -265,6 +309,8 @@ def toggle_info():
 if __name__ == "__main__":
 
     dfs = DFS("test_dfs.json")
+
+    filewriter = Filewriter()
 
     local_test = len(sys.argv) > 2
 
