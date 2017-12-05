@@ -68,7 +68,7 @@ class Node:
     def _send_message(self, tag, data):
         self._lock.acquire()
         try:
-            msg = self.data_str(tag, data)1;5B1;5B
+            msg = self.data_str(tag, data)
             self._conn.send(str.encode(msg))
         except:
             self._lock.release()

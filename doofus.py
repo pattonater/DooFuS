@@ -161,7 +161,7 @@ def handle_file(filename, host):
     filewriter.add_file(filename)
 
 def handle_chunk(msg):
-    msglist = msg.split(MessageTags.DELIM)
+    msglist = msg.split(MessageTags.DELIMITER)
     filename = msglist[0]
     chunk = msglist[1]
     filewriter.add_chunk(filename, chunk)
