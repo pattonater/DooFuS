@@ -44,6 +44,8 @@ class Network:
         self._config = NetworkConfig()
         self._authorized = set()
 
+        self._users = {}
+
         self._lock = Lock()
 
         self._load_from_config()
@@ -52,7 +54,6 @@ class Network:
 ######################################
 ## Network Outgoing Interface
 #####################################
-
     def connect_to_host(self, host):
         if host in self._connected:
             return False
@@ -79,7 +80,7 @@ class Network:
                 self._new.add(host)
 
             if host in self._verified:
-                print("Connected to %s" % (host))
+                print("Connected to %s at %s" % (self._users[host], host))
             else:
                 logger.info("Network: Connection to %s succeeded. Awaiting verification..." % (host))
             return True
@@ -123,6 +124,9 @@ class Network:
     def send_dfs(self, files, host):
         pass
 
+    def send_poke(self, host):
+        self._nodes[host].send_poke()
+
     def send_file(self, host, file_name):
         if not self.connected(host):
             print("Tried to send file to disconnected host")
@@ -163,11 +167,14 @@ class Network:
 
         if verified:
             if host in self._connected:                
-                print("Connected to %s" % (host))
+                print("Connected to %s at %s" % (id, host))
             else:
                 logger.info("Network: %s identity verified as %s. Awaiting connection..." % (host, id))
                 
             self._verified.add(host)
+
+            # fo now
+            self._users[host] = id
 
             # if this is a new host save it
             if (host not in self._seen or host in self._new) and not self.TESTING_MODE:
@@ -202,6 +209,11 @@ class Network:
 
     def verified(self, host):
         return host in self._verified
+
+    def id(self, host):
+        if host not in self._users:
+            return "HUGONO"
+        return self._users[host]
 
     def get_seen_nodes(self):
         return list(self._seen)

@@ -12,6 +12,7 @@ class MessageTags:
     FILE        = "F"
     EOF         = "E"
     CHUNK       = "C"
+    POKE        = "P"
 
     DELIMITER   = "~"
 

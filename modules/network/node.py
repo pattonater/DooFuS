@@ -20,12 +20,16 @@ class Node:
         self._port = port
         self._conn = socket
 
+        self._id = None
         self._last_heartbeat = time.time()
 
         self._lock = Lock()
 
     def host(self):
         return self._host
+
+#    def id(self):
+ #       return self._id
 
     # Not currently useful
     def record_heartbeat(self):
@@ -47,6 +51,14 @@ class Node:
         finally:
             self._lock.release()
 
+#    def set_id(self, id):
+ #       if self._id:
+  #          #print("Hey ids can't change......")
+   #         pass
+    #    self._id = id
+    def send_poke(self):
+        return self._send_message(MessageTags.POKE, ["poke"])
+    
     # Sends single byte message as heartbeat to host. Primarily used to test
     # the connection; if it doesn't go through, we assume the host is down.
     def send_heartbeat(self):

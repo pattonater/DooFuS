@@ -153,7 +153,9 @@ def listen_for_messages(conn, host):
                 elif type == MessageTags.CHUNK:
                     handle_chunk(msg)
                 elif type == MessageTags.EOF:
-                    handle_EOF(msg)
+                    handle_EOF(msg, host)
+                elif type == MessageTags.POKE:
+                    print("%s poked you!" % network.id(host))
 
 def handle_file(filename, host):
     print("Receiving file " + filename + " from " + host + "...")
@@ -166,10 +168,10 @@ def handle_chunk(msg):
     chunk = msglist[1]
     filewriter.add_chunk(filename, chunk)
 
-def handle_EOF(filename):
+def handle_EOF(filename, host):
     print("Finished receiving %s" % (filename))
     filewriter.write(filename)
-    dfs.add_file(filename, my_id)
+    dfs.add_file(filename, network.id(host))
 
 def handle_authorized_msg(msg):
     ids = msg.split(MessageTags.DELIMITER)
@@ -253,6 +255,9 @@ def user_interaction():
         elif text == "info":
             toggle_info()
             network.toggle_info()
+        elif text.startswith("poke"):
+            network.send_poke(text[5:])
+            
 
 def add_file(filename):
     for file in dfs.list_files():
