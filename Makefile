@@ -4,6 +4,12 @@ port = 8889
 run:
 	python3 doofus.py hugo
 
+ryan:
+	python3 doofus.py ryan
+
+marc:
+	python3 doofus.py marc
+
 
 # run these concurrently for local testing. Dont change the ports
 la:
