@@ -99,7 +99,7 @@ class Network:
                     if self._nodes[host].send_heartbeat():
                         logger.debug("Network: Heartbeat sent to %s" % (host))
                     else:
-                        logger.error("Network: Heartbeat to %s failed" % (host))
+                        logger.info("Network: Heartbeat to %s failed" % (host))
                         self.disconnect_from_host(host)
         except RuntimeError:
             # This is from _connected changing size
@@ -173,6 +173,7 @@ class Network:
             if (host not in self._seen or host in self._new) and not self.TESTING_MODE:
                 self._config.store_host(host)
                 self._new.add(host)
+                logger.info("Added host %s to network config file" % (host))
         else:
             logger.info("Network: %s identity %s not recognized" % (host, id))
 

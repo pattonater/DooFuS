@@ -156,7 +156,7 @@ def listen_for_messages(conn, host):
                     handle_EOF(msg)
 
 def handle_file(filename, host):
-    print("Receiving file " + filename + " from " + host)
+    print("Receiving file " + filename + " from " + host + "...")
     # prepend to filename if testing locally
     filewriter.add_file(filename)
 
@@ -167,8 +167,9 @@ def handle_chunk(msg):
     filewriter.add_chunk(filename, chunk)
 
 def handle_EOF(filename):
-    print("End of file " + filename)
+    print("Finished receiving %s" % (filename))
     filewriter.write(filename)
+    dfs.add_file(filename, my_id)
 
 def handle_authorized_msg(msg):
     ids = msg.split(MessageTags.DELIMITER)
@@ -230,7 +231,7 @@ def user_interaction():
             dfs.delete_file(text[7:])
         elif text == "help":
             print_help()
-        elif text == "quit":
+        elif text == "quit" or text == "q":
             exit()
         elif text == "join":
             connect_to_network()
@@ -244,6 +245,8 @@ def user_interaction():
             print("I don't know how")
         elif text == "refresh":
             print("I don't know how")
+        elif text == "clear files":
+            dfs.clear_files()
         elif text == "debug":
             toggle_debug()
             network.toggle_debug()
@@ -252,7 +255,6 @@ def user_interaction():
             network.toggle_info()
 
 def add_file(filename):
-
     for file in dfs.list_files():
         if file.get("filename") == filename:
             print("File already exists. Delete the current version or choose a new name.")
@@ -309,7 +311,7 @@ def toggle_info():
 #########################################
 if __name__ == "__main__":
 
-    dfs = DFS("test_dfs.json")
+    dfs = DFS("modules/dfs/dfs.json")
 
     filewriter = Filewriter()
 

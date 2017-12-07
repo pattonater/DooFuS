@@ -4,7 +4,7 @@ class MessageTags:
     HEARTBEAT   = "H"
     HOST        = "T"
     VERIFY      = "V"
-    JOIN        = "J" #???
+#    JOIN        = "J" #???
     UPLOAD      = "U"
     REMOVE      = "R"
     AUTHORIZED  = "A"
