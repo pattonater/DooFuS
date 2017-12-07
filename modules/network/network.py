@@ -44,6 +44,7 @@ class Network:
         self._config = NetworkConfig()
         self._authorized = set()
 
+        self._hosts = {}
         self._users = {}
 
         self._lock = Lock()
@@ -124,8 +125,10 @@ class Network:
     def send_dfs(self, files, host):
         pass
 
-    def send_poke(self, host):
-        self._nodes[host].send_poke()
+    def send_poke(self, id):
+        if host not in self._hosts:
+            return False
+        self._nodes[self._hosts[id]].send_poke()
 
     def send_file(self, host, file_name):
         if not self.connected(host):
@@ -175,6 +178,7 @@ class Network:
 
             # fo now
             self._users[host] = id
+            self._hosts[id] = host
 
             # if this is a new host save it
             if (host not in self._seen or host in self._new) and not self.TESTING_MODE:
