@@ -346,7 +346,7 @@ if __name__ == "__main__":
     # should this be on a separate thread?
     # pros: user can interact with program right away
     # cons: possible race conditions?
-    threading.Thread(target=connect_to_network).start()
+#    threading.Thread(target=connect_to_network).start()
 
     # start up heatbeat thread
     threading.Thread(target=send_heartbeats).start()
