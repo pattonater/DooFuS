@@ -122,7 +122,7 @@ def listen_for_messages(conn, host):
 
 
         verified = verified or network.verified(host)
-        well_formatted = type and msg # and MessageTags.valid_tag(type)
+        well_formatted = type and msg
         
         # handle the actual message
         if not verified:
@@ -134,6 +134,7 @@ def listen_for_messages(conn, host):
                     # kill connection if not verified within 2 seconds
                     time_to_die =  time.time() - start_time > 2
         else:
+            # TODO get rid of unnecessary nesting
             if not network.connected(host):
                 # this is where we will see when the connection should die mostly
                 time_to_die = True
@@ -163,6 +164,7 @@ def handle_file(filename, host):
     filewriter.add_file(filename)
 
 def handle_chunk(msg):
+    #TODO should probably send num of total chunks and which this is for info verification
     msglist = msg.split(MessageTags.DELIMITER)
     filename = msglist[0]
     chunk = msglist[1]

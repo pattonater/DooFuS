@@ -28,6 +28,16 @@ logger.addHandler(h)
 logger.addHandler(h2)
 logger.addHandler(ch)
 
+# _nodes:       mapping of host -> node, all nodes created since startup
+# _hosts:       mapping of id -> host (currently not updated when hosts disconnect)
+# _users:       mapping of host -> id (currently not updated when hosts disconnect)
+# _seen:        all hosts encountered (theoretically ever)
+# _new:         hosts first connected to during this run
+# _connected:   hosts currently connected to
+# _verified:    hosts verifed during this run
+# _authorized:  ids of users who can connect to the network
+
+
 class Network:
     LISTEN_PORT = 8889
     TESTING_MODE = False
@@ -76,9 +86,9 @@ class Network:
             # add node to all relevant sets
             self._nodes[host] = node
             self._connected.add(host)
-            self._seen.add(host)
             if host not in self._seen:
                 self._new.add(host)
+                self._seen.add(host)
 
             if host in self._verified:
                 print("Connected to %s at %s" % (self._users[host], host))
@@ -126,8 +136,9 @@ class Network:
         pass
 
     def send_poke(self, id):
-        if host not in self._hosts:
+        if id not in self._hosts or self._hosts[id] not in self._nodes:
             return False
+
         self._nodes[self._hosts[id]].send_poke()
 
     def send_file(self, host, file_name):
@@ -176,7 +187,7 @@ class Network:
                 
             self._verified.add(host)
 
-            # fo now
+            # for now
             self._users[host] = id
             self._hosts[id] = host
 
