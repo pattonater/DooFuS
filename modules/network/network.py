@@ -6,27 +6,10 @@ from threading import Lock
 from .entity import Entity
 from .node import Node
 from .networkconfig import NetworkConfig
+from modules.logger.log import Log
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
-
-h = logging.FileHandler('logs/debug.log')
-h.setLevel(logging.NOTSET)
-h.setFormatter(formatter)
-
-h2 = logging.FileHandler('logs/info.log')
-h2.setLevel(logging.INFO)
-h2.setFormatter(formatter)
-
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.WARNING)
-ch.setFormatter(formatter)
-
-logger.addHandler(h)
-logger.addHandler(h2)
-logger.addHandler(ch)
+logger = None
+log = None
 
 # _nodes:       mapping of host -> node, all nodes created since startup
 # _hosts:       mapping of id -> host (currently not updated when hosts disconnect)
@@ -61,6 +44,10 @@ class Network:
 
         self._load_from_config()
 
+        log = Log()
+        self._logger = log.get_logger()
+        
+
 
 ######################################
 ## Network Outgoing Interface
@@ -69,7 +56,7 @@ class Network:
         if host in self._connected:
             return False
 
-        logger.info("Network: Attempting to connect to %s" % (host))
+        self._logger.info("Network: Attempting to connect to %s" % (host))
 
         try:
             # Connect to host
@@ -93,10 +80,10 @@ class Network:
             if host in self._verified:
                 print("Connected to %s at %s" % (self._users[host], host))
             else:
-                logger.info("Network: Connection to %s succeeded. Awaiting verification..." % (host))
+                self._logger.info("Network: Connection to %s succeeded. Awaiting verification..." % (host))
             return True
         except:
-            logger.info("Network: Connection to %s failed" % (host))
+            self._logger.info("Network: Connection to %s failed" % (host))
             return False
 
     def disconnect_from_host(self, host):
@@ -109,9 +96,9 @@ class Network:
             for host in self._connected:
                 if host in self._verified:
                     if self._nodes[host].send_heartbeat():
-                        logger.debug("Network: Heartbeat sent to %s" % (host))
+                        self._logger.debug("Network: Heartbeat sent to %s" % (host))
                     else:
-                        logger.info("Network: Heartbeat to %s failed" % (host))
+                        self._logger.info("Network: Heartbeat to %s failed" % (host))
                         self.disconnect_from_host(host)
         except RuntimeError:
             # This is from _connected changing size
@@ -120,11 +107,11 @@ class Network:
 
     def broadcast_host(self, new_host):
         if new_host not in self._verified:
-            logger.warning("Network: Shouldn't broadcast an unverified host")
+            self._logger.warning("Network: Shouldn't broadcast an unverified host")
             return
 
         try:
-            logger.info("Network: Broadcasting %s" % (new_host))
+            self._logger.info("Network: Broadcasting %s" % (new_host))
             for host in self._connected:
                 if host in self._verified and not host == new_host:
                     self._nodes[host].send_host(new_host)
@@ -183,7 +170,7 @@ class Network:
             if host in self._connected:                
                 print("Connected to %s at %s" % (id, host))
             else:
-                logger.info("Network: %s identity verified as %s. Awaiting connection..." % (host, id))
+                self._logger.info("Network: %s identity verified as %s. Awaiting connection..." % (host, id))
                 
             self._verified.add(host)
 
@@ -195,9 +182,9 @@ class Network:
             if (host not in self._seen or host in self._new) and not self.TESTING_MODE:
                 self._config.store_host(host)
                 self._new.add(host)
-                logger.info("Added host %s to network config file" % (host))
+                self._logger.info("Added host %s to network config file" % (host))
         else:
-            logger.info("Network: %s identity %s not recognized" % (host, id))
+            self._logger.info("Network: %s identity %s not recognized" % (host, id))
 
             # if there is a connection get rid of it
             if host in self._nodes:
@@ -207,7 +194,7 @@ class Network:
 
     def record_heartbeat(self, host):
         if not host in self._nodes:
-            logger.error("can't recieve heartbeat from nonexistent node")
+            self._logger.error("can't recieve heartbeat from nonexistent node")
             return
         self._nodes[host].record_heartbeat()
 
@@ -236,17 +223,6 @@ class Network:
     def get_connected_nodes(self):
         return list(self._connected)
 
-    def toggle_debug(self):
-        if (logger.handlers[2].level != logging.DEBUG):
-            ch.setLevel(logging.DEBUG)
-        else:
-            ch.setLevel(logging.WARNING)
-
-    def toggle_info(self):
-        if (logger.handlers[2].level != logging.INFO):
-            ch.setLevel(logging.INFO)
-        else:
-            ch.setLevel(logging.WARNING)
 
 ######################################
 ## Helper Functions

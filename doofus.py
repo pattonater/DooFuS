@@ -15,6 +15,8 @@ from modules.dfs.dfs import DFS # DFS itself
 
 from modules.filewriter.filewriter import Filewriter # writes files
 
+from modules.logger.log import Log
+
 local_test = False
 
 LISTEN_PORT = 8889
@@ -29,26 +31,8 @@ dfs = None
 
 filewriter = None
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
-
-h = logging.FileHandler('logs/debug.log')
-h.setLevel(logging.NOTSET)
-h.setFormatter(formatter)
-
-h2 = logging.FileHandler('logs/info.log')
-h2.setLevel(logging.INFO)
-h2.setFormatter(formatter)
-
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.WARNING)
-ch.setFormatter(formatter)
-
-logger.addHandler(h)
-logger.addHandler(h2)
-logger.addHandler(ch)
+log = None
+logger = None
 
 def _get_ip():
     #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/
@@ -252,11 +236,9 @@ def user_interaction():
         elif text == "clear files":
             dfs.clear_files()
         elif text == "debug":
-            toggle_debug()
-            network.toggle_debug()
+            log.toggle_debug()
         elif text == "info":
-            toggle_info()
-            network.toggle_info()
+            log.toggle_info()
         elif text.startswith("poke"):
             network.send_poke(text[5:])
             
@@ -296,22 +278,6 @@ def truncate(text, length):
 def print_help():
     print("Commands:\n nodes - print node list\n files - print file list\n upload [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n join\n connect [host_name]\n myinfo - print ip addr and userid\n verify [user_id]\n refresh\n debug - toggle debugging mode\n info - toggle info mode\n quit")
 
-def toggle_debug():
-    if logger.handlers[2].level != logging.DEBUG:
-        ch.setLevel(logging.DEBUG)
-        logger.info("Starting debugging")
-    else:
-        logger.info("Stopping debugging")
-        ch.setLevel(logging.WARNING)
-
-
-def toggle_info():
-    if logger.handlers[2].level != logging.INFO:
-        ch.setLevel(logging.INFO)
-        logger.info("Starting to print INFO")
-    else:
-        logger.info("Stopping printing of INFO")
-        ch.setLevel(logging.WARNING)
     
 #########################################
 ## Startup
@@ -335,6 +301,9 @@ if __name__ == "__main__":
     profile = Entity(my_host, my_port, my_id)
     network = Network(profile, local_test)
 
+    log = Log()
+    logger = log.get_logger()
+    
     # hello
     logger.info("Starting up")
 
