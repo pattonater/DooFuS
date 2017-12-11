@@ -6,7 +6,7 @@
 
 from threading import Lock
 import modules.dfs.dfs as dfs
-from .filewriter import Filewriter
+from modules.dfs.filewriter import Filewriter
 
 class DFSManager:
 

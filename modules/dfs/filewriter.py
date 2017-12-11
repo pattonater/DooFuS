@@ -20,7 +20,7 @@ class Filewriter:
         self._files[filename].write()
 
     def read(self, filename):
-        return read self._files[filename].read()
+        return self._files[filename].read()
 
     def get_chunk_indices(self, filename):
         return self._files[filename].get_chunk_indices()

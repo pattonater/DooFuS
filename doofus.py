@@ -13,7 +13,7 @@ from modules.network.entity import Entity
 import modules.dfs.dfs as dfs # DFS exceptions
 from modules.dfs.dfs import DFS # DFS itself
 
-from modules.filewriter.filewriter import Filewriter # writes files
+from modules.dfs.filewriter import Filewriter # writes files
 
 from modules.logger.log import Log
 
