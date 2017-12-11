@@ -119,33 +119,23 @@ def listen_for_messages(conn, host):
                     handle_host_msg(msg, host)
                 elif type == Message.Tags.USER_INFO:
                     handle_users_msg(msg)
-    #            elif type == Message.Tags.FILE:
-     #               handle_file(msg, host)
-#                elif type == Message.Tags.CHUNK:
- #                   handle_chunk(msg)
-  #              elif type == Message.Tags.EOF:
-   #                 handle_EOF(msg, host)
+                elif type == STORE_REPLICA:
+                    store_replica(msg)
                 elif type == Message.Tags.POKE:
                     print("%s poked you!" % network.id(host))
                 elif type == Message.Tags.UPLOAD_FILE:
                     handle_upload(msg, host)
 
-def handle_file(filename, host):
-    print("Receiving file " + filename + " from " + host + "...")
-    # prepend to filename if testing locally
-    filewriter.add_file(filename)
-
-def handle_chunk(msg):
-    #TODO should probably send num of total chunks and which this is for info verification
+def store_replica(msg):
     msglist = msg.split(Message.DELIMITER)
-    filename = msglist[0]
-    chunk = msglist[1]
-    filewriter.add_chunk(filename, chunk)
+    filename = msg[0]
+    uploader = msg[1]
+    part = msg[2]
+    total = msg[3]
+    data = msg[4]
 
-def handle_EOF(filename, host):
-    print("Finished receiving %s" % (filename))
-    filewriter.write(filename)
-#    dfs.add_file(filename, network.id(host))
+    print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader)
+    dfs_manager.write_replica(name, uploader, part, total, data)
 
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)
