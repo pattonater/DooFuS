@@ -57,7 +57,7 @@ class DFSManager:
             if i == num_replicas:
                 break
 
-            self._network.send_replica(host, filename, self._id)
+            self._network.send_replica(host, filename, self._id, 1, 1)
 
             i += 1
 
