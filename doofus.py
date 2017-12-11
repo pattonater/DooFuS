@@ -131,8 +131,8 @@ def listen_for_messages(conn, host):
                     network.record_heartbeat(host)
                 elif type == MessageTags.HOST:
                     handle_host_msg(msg, host)
-                elif type == MessageTags.AUTHORIZED:
-                    handle_authorized_msg(msg)
+                elif type == MessageTags.USERS:
+                    handle_users_msg(msg)
                 elif type == MessageTags.FILE:
                     handle_file(msg, host)
                 elif type == MessageTags.CHUNK:
@@ -159,9 +159,9 @@ def handle_EOF(filename, host):
     filewriter.write(filename)
     dfs.add_file(filename, network.id(host))
 
-def handle_authorized_msg(msg):
+def handle_users_msg(msg):
     ids = msg.split(MessageTags.DELIMITER)
-    # TODO send them to network to store
+    network.add_users(ids)
 
 def handle_verify_msg(id, host):
     logger.info("Received id from %s" % (host))
@@ -230,7 +230,7 @@ def user_interaction():
         elif text == "myinfo":
             print("%s as %s" % (my_host, my_id))
         elif text.startswith("verify"):
-            print("I don't know how")
+            network.add_users([text[7:]])
         elif text == "refresh":
             print("I don't know how")
         elif text == "clear files":
@@ -241,6 +241,8 @@ def user_interaction():
             log.toggle_info()
         elif text.startswith("poke"):
             network.send_poke(text[5:])
+        elif text == "users":
+            print(network.users())
             
 
 def add_file(filename):
@@ -303,6 +305,7 @@ if __name__ == "__main__":
 
     log = Log()
     logger = log.get_logger()
+    log.toggle_debug()
     
     # hello
     logger.info("Starting up")

@@ -73,7 +73,7 @@ class Node:
         return self._send_message(MessageTags.HOST, [host])
 
     def send_verified_ids(self, ids):
-        return self._send_message(MessageTags.AUTHORIZED, ids)
+        return self._send_message(MessageTags.USERS, ids)
 
     # Since network.py will theoretically be sending heartbeats and other messages on different
     # threads (but on the same port), it's important to lock around the

@@ -12,13 +12,12 @@ logger = None
 log = None
 
 # _nodes:       mapping of host -> node, all nodes created since startup
-# _hosts:       mapping of id -> host (currently not updated when hosts disconnect)
-# _users:       mapping of host -> id (currently not updated when hosts disconnect)
+# _names:       mapping of host -> id (currently not updated when hosts disconnect)
+# _users:       mapping of id -> host (currently not updated when hosts disconnect)
 # _seen:        all hosts encountered (theoretically ever)
 # _new:         hosts first connected to during this run
 # _connected:   hosts currently connected to
 # _verified:    hosts verifed during this run
-# _authorized:  ids of users who can connect to the network
 
 
 class Network:
@@ -35,9 +34,8 @@ class Network:
         self._connected = set()
         self._verified = set()
         self._config = NetworkConfig()
-        self._authorized = set()
 
-        self._hosts = {}
+        self._names = {}
         self._users = {}
 
         self._lock = Lock()
@@ -78,7 +76,7 @@ class Network:
                 self._seen.add(host)
 
             if host in self._verified:
-                print("Connected to %s at %s" % (self._users[host], host))
+                print("Connected to %s at %s" % (self._names[host], host))
             else:
                 self._logger.info("Network: Connection to %s succeeded. Awaiting verification..." % (host))
             return True
@@ -90,6 +88,10 @@ class Network:
         if host in self._connected: self._connected.remove(host)
         if host in self._verified: self._verified.remove(host)
         if host in self._nodes: self._nodes[host].close_connection()
+        if host in self._names:
+            id = self._names[host]
+            self._users[id] = None
+            self._names.remove(host)
 
     def broadcast_heartbeats(self):
         try:
@@ -119,14 +121,11 @@ class Network:
             # This is from _connected changing size
             pass
 
-    def send_dfs(self, files, host):
-        pass
-
     def send_poke(self, id):
-        if id not in self._hosts or self._hosts[id] not in self._nodes:
+        if id not in self._users or self._users[id] not in self._nodes:
             return False
 
-        self._nodes[self._hosts[id]].send_poke()
+        self._nodes[self._users[id]].send_poke()
 
     def send_file(self, host, file_name):
         if not self.connected(host):
@@ -140,9 +139,15 @@ class Network:
             return
 
         node = self._nodes[host]
-        node.send_verified_ids(list(self._authorized))
+        node.send_verified_ids(self._users.keys())
 
-        # send hosts
+
+    def send_dfs(self, files, host):
+        if not host in self._nodes:
+            return
+
+        node = self._nodes[host]        
+
 
 ######################################
 ## Network Internal Interface
@@ -153,7 +158,7 @@ class Network:
         print(self._seen)
         print(self._connected)
         print(self._verified)
-        print(self._authorized)
+        print(self._users)
 
     def startup(self):
         try:
@@ -164,7 +169,10 @@ class Network:
             pass
 
     def verify_host(self, host, id):
-        verified = id in self._authorized
+        verified = id in self._users and self._users[id] == None
+
+        if self._users[id]:
+            self._logger.info("someone is already signed in as %s" % (id))
 
         if verified:
             if host in self._connected:                
@@ -175,8 +183,8 @@ class Network:
             self._verified.add(host)
 
             # for now
-            self._users[host] = id
-            self._hosts[id] = host
+            self._users[id] = host
+            self._names[host] = id
 
             # if this is a new host save it
             if (host not in self._seen or host in self._new) and not self.TESTING_MODE:
@@ -191,6 +199,12 @@ class Network:
                 self.disconnect_from_host(host)
 
         return verified
+
+    def add_users(self, ids):
+        for id in ids:
+            if not id in self._users:
+                self._users[id] = None
+                self._config.store_id(id)
 
     def record_heartbeat(self, host):
         if not host in self._nodes:
@@ -211,6 +225,9 @@ class Network:
 
     def verified(self, host):
         return host in self._verified
+
+    def users(self):
+        return self._users.keys()
 
     def id(self, host):
         if host not in self._users:
@@ -234,4 +251,7 @@ class Network:
             if not self.TESTING_MODE and not host == self._me.host:
                 self._seen.add(host)
 
-        self._authorized = set(self._config.identities())
+        ids = self._config.identities()
+
+        for id in ids:
+            self._users[id] = None

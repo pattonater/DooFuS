@@ -6,17 +6,15 @@ class NetworkConfig:
 
 
     def __init__(self):
-        config = {}
-        config["Nodes"] = []
-        config["Identities"] = []
-        
+        self._json = {}
+        self._json["Nodes"] = []
+        self._json["Identities"] = []
+
         try:
             with open(self.FILEPATH, 'r') as file:
-                config = json.load(file)
-        except Exception as e:
-            print("Failed to open network config file. Exception: " + str(e))
-
-        self._json = config
+                self._json = json.load(file)
+        except FileNotFoundError:
+            self._write_to_file()
 
     def hosts(self):
         return [node["host"] for node in  self._json["Nodes"]]
