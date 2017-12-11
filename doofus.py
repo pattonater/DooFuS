@@ -98,15 +98,8 @@ def listen_for_messages(conn, host):
         if not verified:
                 # don't handle any messages from unverified hosts except verify
                 if type == Message.Tags.IDENTITY:
-                    verified = handle_verify_msg(msg, host)
-
-                    if verified:
-                        network.send_network_info(host)
-                        network.send_dfs("hahahaha im not a dfs")
-                    else:
-                        time_to_die = True
+                    time_to_die = not handle_verify_msg(msg, host)
                     
-
                 if not time_to_die:
                     # kill connection if not verified within 2 seconds
                     time_to_die =  time.time() - start_time > 2
@@ -171,8 +164,8 @@ def handle_verify_msg(id, host):
 
         # do other handshake stuff
         # send them your dfs info
-        files = dfs.list_files
-        network.send_dfs(files, host)
+        network.send_network_info(host)
+        network.send_dfs_info(host, manager.get_log())
 
         # send them network config info (trusted ids)
         network.send_network_info(host)
@@ -221,7 +214,7 @@ def user_interaction():
             # tell dfs manager to download
         elif text == "files":
             print_file_list()
-        elif text.startwith("delete"):
+        elif text.startswith("delete"):
             dfs.delete_file(text[7:])
         elif text == "help":
             print_help()
@@ -251,8 +244,6 @@ def user_interaction():
             network.send_poke(user)
         elif text == "users":
             print(network.users())
-
-
             
 
 def add_file(filename):

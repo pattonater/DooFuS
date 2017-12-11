@@ -57,7 +57,7 @@ class Node:
     def send_heartbeat(self):
         return self._send_message(Message.Tags.HEARTBEAT, "hi")
 
-    def send_dfs(self, dfs_json_str):
+    def send_dfs_info(self, dfs_json_str):
         return self._send_message(Message.Tags.DFS_INFO, dfs_json_str)
 
     # Identifies self to host

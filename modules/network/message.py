@@ -27,7 +27,7 @@ class Message:
 
         if isinstance(data, list):
             data_str = cls.DELIMITER.join(data)
-        elif isinstance(data, string):
+        elif isinstance(data, str):
             data_str = data
         else:
             print("data_to_str only supposrt lists and strings")

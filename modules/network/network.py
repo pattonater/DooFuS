@@ -147,21 +147,16 @@ class Network:
         node = self._nodes[host]
         node.send_verified_ids(list(self._users.keys()))
 
-<<<<<<< HEAD
-
-    def send_dfs(self, dfs, host):
-=======
     def send_replica(self, host, filename, my_id):
         pass
-    
-    def send_dfs(self, files, host):
->>>>>>> 1997a05abc8be86f51227038d9df92e70ca74e7a
+
+    def send_dfs_info(self, host, dfs):
         if not host in self._nodes:
             return
 
-        node = self._nodes[host]        
-        dfs_json = json.load(dfs)
-        dfs_json_str = json.dumps(dfs_json)
+        node = self._nodes[host]
+        print(dfs)
+        dfs_json_str = json.dumps(dfs)
         node.send_dfs_info(dfs_json_str)
 
 ######################################
@@ -246,9 +241,7 @@ class Network:
 
     def id(self, host):
         if host not in self._users:
-            return "HUGO200~directory = os.path.dirname(file_path)
-    if not os.path.exists(directory):
-        os.makedirs(directory)NO"
+            return False
         return self._users[host]
 
     def get_seen_nodes(self):
