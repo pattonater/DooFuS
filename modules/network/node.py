@@ -76,6 +76,14 @@ class Node:
 
     def replica_alert(self, file_name, uploader, part_num, total_parts):
         return self._send_message(Message.Tags.HAVE_REPLICA, [file_name, uploader, part_num, total_parts])
+
+    def request_file(self, file_name, part_num, total_parts):
+        return self._send_message(Message.Tags.REQUEST_FILE, [file_name, part_num, total_parts])
+
+    def serve_file_request(self, file_name, part_num, total_parts, file):
+        return self._send_message(Message.Tags.FILE_SLICE, [file_name, part_num, total_parts, file])
+
+    
     # Since network.py will theoretically be sending heartbeats and other messages on different
     # threads (but on the same port), it's important to lock around the
     def _send_message(self, tag, data):
