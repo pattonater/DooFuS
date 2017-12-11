@@ -58,8 +58,35 @@ class DFS:
         self._log["files"] = []
         self._update(True)
 
+
+    def check_file(self, filename, uploader):
+        for f in self._log["files"]:
+            if f["filename"] == filename and f["uploader"] == uploader:
+                return True
+        return False
+
+    # Adds replica for given file to _log
+    def add_replica(self, filename, uploader, replica):
+        self._lock.acquire()
+        file = None
+        for f in self._log["files"]:
+            if f["filename"] == filename and f["uploader"] == uploader:
+                file = f
+                break
+
+        for r in file["replicas"]:
+            if r == replica:
+                self._lock.release()
+                return
+
+        file["replicas"].append(replica)
+
+        self._update()
+        
+        self._lock.release()
+
     # Adds file object to _log
-    def add_file(self, filename, uploader):
+    def add_file(self, filename, uploader, replicas = []):
         self._lock.acquire()
 
         # Verify the file doesn't already exist (name collision)
@@ -71,7 +98,7 @@ class DFS:
         # No name collision. Add file
         self._log["files"].append({
             "filename" : filename,
-            "replicas" : [],
+            "replicas" : replicas,
             "uploader" : uploader})
 
         self._update()
@@ -130,6 +157,12 @@ class DFSAddFileError(DFSError):
     def __init__(self, filename, uploader):
         DFSError.__init__(self, "DFS add file error: Could not add file\n"
             + "filename: " + filename + "\nuploader: " + uploader)
+
+class DFSAddReplicaError(DFSError):
+    def __init__(self, filename, uploader, replica, additional = ""):
+        DFSError.__init__(self, "DFS add file error: Could not add file\n"
+            + "filename: " + filename + "\nuploader: " + uploader + "\nreplica: " + replica
+            + additional)
 
 class DFSRemoveFileError(DFSError):
     def __init__(self, filename):

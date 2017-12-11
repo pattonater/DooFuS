@@ -13,7 +13,7 @@ from modules.network.entity import Entity
 import modules.dfs.dfs as dfs # DFS exceptions
 from modules.dfs.dfs import DFS # DFS itself
 
-from modules.filewriter.filewriter import Filewriter # writes files
+from modules.dfs.filewriter import Filewriter # writes files
 
 from modules.logger.log import Log
 
@@ -133,6 +133,8 @@ def listen_for_messages(conn, host):
    #                 handle_EOF(msg, host)
                 elif type == Message.Tags.POKE:
                     print("%s poked you!" % network.id(host))
+                elif type == Message.Tags.UPLOAD_FILE:
+                    handle_upload(msg, host)
 
 def handle_file(filename, host):
     print("Receiving file " + filename + " from " + host + "...")
@@ -149,7 +151,7 @@ def handle_chunk(msg):
 def handle_EOF(filename, host):
     print("Finished receiving %s" % (filename))
     filewriter.write(filename)
-    dfs.add_file(filename, network.id(host))
+#    dfs.add_file(filename, network.id(host))
 
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)
@@ -180,6 +182,13 @@ def handle_host_msg(new_host, host):
         logger.info("Notified %s online by %s" % (new_host, host))
         network.connect_to_host(new_host)
 
+def handle_upload(msg, host):
+    msglist = msg.split(Message.DELIMITER)
+    filename = msglist[0]
+    uploader = msglist[1]
+    print("hello upload")
+    dfs.add_file(filename, uploader)
+        
 #########################################
 ## Thread for recieving new 1;5B1;5Bconnections
 #########################################
@@ -250,10 +259,12 @@ def add_file(filename):
         if file.get("filename") == filename:
             print("File already exists. Delete the current version or choose a new name.")
             return
-    
     # send to everyone
+    print("hello?")
     for host in network.get_connected_nodes():
-        network.send_file(host, filename)
+        print("about to tell host %s to add file" % (host))
+        network.add_file(host, filename, my_id) # Send metadata telling hosts about new file
+#        network.send_file(host, filename)
 
     # add to dfs TODO add replicas
     dfs.add_file(filename, my_id)
