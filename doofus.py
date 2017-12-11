@@ -126,7 +126,7 @@ def listen_for_messages(conn, host):
    #                 handle_EOF(msg, host)
                 elif type == Message.Tags.POKE:
                     print("%s poked you!" % network.id(host))
-                elif type == MessageTags.UPLOAD:
+                elif type == Message.Tags.UPLOAD_FILE:
                     handle_upload(msg, host)
 
 def handle_file(filename, host):
@@ -176,10 +176,10 @@ def handle_host_msg(new_host, host):
         network.connect_to_host(new_host)
 
 def handle_upload(msg, host):
-    msglist = msg.split(MessageTags.DELIMITER)
+    msglist = msg.split(Message.DELIMITER)
     filename = msglist[0]
     uploader = msglist[1]
-    print ("hello from handle upload")
+    print("hello upload")
     dfs.add_file(filename, uploader)
         
 #########################################
@@ -244,12 +244,12 @@ def add_file(filename):
         if file.get("filename") == filename:
             print("File already exists. Delete the current version or choose a new name.")
             return
-    print("hello from doofus:add_file")
     # send to everyone
+    print("hello?")
     for host in network.get_connected_nodes():
         print("about to tell host %s to add file" % (host))
         network.add_file(host, filename, my_id) # Send metadata telling hosts about new file
-        network.send_file(host, filename)
+#        network.send_file(host, filename)
 
     # add to dfs TODO add replicas
     dfs.add_file(filename, my_id)

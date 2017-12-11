@@ -71,8 +71,7 @@ class Node:
         return self._send_message(Message.Tags.USER_INFO, ids)
 
     def add_file(self, file_name, my_id):
-        print ("hello from node!")
-        return self._send_message(MessageTags.UPLOAD, [file_name, my_id])
+        return self._send_message(Message.Tags.UPLOAD_FILE, [file_name, my_id])
 
     # Since network.py will theoretically be sending heartbeats and other messages on different
     # threads (but on the same port), it's important to lock around the
