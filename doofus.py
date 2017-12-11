@@ -12,8 +12,9 @@ from modules.network.message import Message
 from modules.network.entity import Entity
 import modules.dfs.dfs as dfs # DFS exceptions
 from modules.dfs.dfs import DFS # DFS itself
+import modules.dfs.dfsmanager as DFSM
 
-from modules.filewriter.filewriter import Filewriter # writes files
+from modules.dfs.filewriter import Filewriter # writes files
 
 from modules.logger.log import Log
 
@@ -118,8 +119,6 @@ def listen_for_messages(conn, host):
                     handle_host_msg(msg, host)
                 elif type == Message.Tags.USER_INFO:
                     handle_users_msg(msg)
-                elif type == STORE_REPLICA:
-                    store_replica(msg)
     #            elif type == Message.Tags.FILE:
      #               handle_file(msg, host)
 #                elif type == Message.Tags.CHUNK:
@@ -128,18 +127,25 @@ def listen_for_messages(conn, host):
    #                 handle_EOF(msg, host)
                 elif type == Message.Tags.POKE:
                     print("%s poked you!" % network.id(host))
+                elif type == Message.Tags.UPLOAD_FILE:
+                    handle_upload(msg, host)
 
-def store_replica(msg):
+def handle_file(filename, host):
+    print("Receiving file " + filename + " from " + host + "...")
+    # prepend to filename if testing locally
+    filewriter.add_file(filename)
+
+def handle_chunk(msg):
+    #TODO should probably send num of total chunks and which this is for info verification
     msglist = msg.split(Message.DELIMITER)
-    filename = msg[0]
-    uploader = msg[1]
-    part = msg[2]
-    total = msg[3]
-    data = msg[4]
+    filename = msglist[0]
+    chunk = msglist[1]
+    filewriter.add_chunk(filename, chunk)
 
-    print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader)
-
-    dfs_manager.write_replica(name, uploader, part, total, data)
+def handle_EOF(filename, host):
+    print("Finished receiving %s" % (filename))
+    filewriter.write(filename)
+#    dfs.add_file(filename, network.id(host))
 
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)
@@ -170,6 +176,13 @@ def handle_host_msg(new_host, host):
         logger.info("Notified %s online by %s" % (new_host, host))
         network.connect_to_host(new_host)
 
+def handle_upload(msg, host):
+    msglist = msg.split(Message.DELIMITER)
+    filename = msglist[0]
+    uploader = msglist[1]
+    print("hello upload")
+    dfs.add_file(filename, uploader)
+        
 #########################################
 ## Thread for recieving new 1;5B1;5Bconnections
 #########################################
@@ -232,10 +245,12 @@ def add_file(filename):
         if file.get("filename") == filename:
             print("File already exists. Delete the current version or choose a new name.")
             return
-    
     # send to everyone
+    print("hello?")
     for host in network.get_connected_nodes():
-        network.send_file(host, filename)
+        print("about to tell host %s to add file" % (host))
+        network.add_file(host, filename, my_id) # Send metadata telling hosts about new file
+#        network.send_file(host, filename)
 
     # add to dfs TODO add replicas
     dfs.add_file(filename, my_id)
@@ -268,8 +283,6 @@ def print_help():
 #########################################
 if __name__ == "__main__":
 
-    dfs = DFS("modules/dfs/dfs.json")
-
     filewriter = Filewriter()
 
     local_test = len(sys.argv) > 2
@@ -284,6 +297,9 @@ if __name__ == "__main__":
 
     profile = Entity(my_host, my_port, my_id)
     network = Network(profile, local_test)
+
+    manager = DFSM.DFSManager(network, my_id, "modules/dfs/dfs.json")
+    dfs = manager.get_DFS_ref()
 
     log = Log()
     logger = log.get_logger()
