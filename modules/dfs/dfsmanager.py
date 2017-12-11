@@ -23,6 +23,9 @@ class DFSManager:
         return node_count
 
 
+    def get_DFS_ref(self):
+        return self._fs
+
     def get_log(self):
         return self._fs.return_log()
 

@@ -12,6 +12,7 @@ from modules.network.message import Message
 from modules.network.entity import Entity
 import modules.dfs.dfs as dfs # DFS exceptions
 from modules.dfs.dfs import DFS # DFS itself
+import modules.dfs.dfsmanager as DFSM
 
 from modules.dfs.filewriter import Filewriter # writes files
 
@@ -297,8 +298,6 @@ def print_help():
 #########################################
 if __name__ == "__main__":
 
-    dfs = DFS("modules/dfs/dfs.json")
-
     filewriter = Filewriter()
 
     local_test = len(sys.argv) > 2
@@ -313,6 +312,9 @@ if __name__ == "__main__":
 
     profile = Entity(my_host, my_port, my_id)
     network = Network(profile, local_test)
+
+    manager = DFSM.DFSManager(network, my_id, "modules/dfs/dfs.json")
+    dfs = manager.get_DFS_ref()
 
     log = Log()
     logger = log.get_logger()
