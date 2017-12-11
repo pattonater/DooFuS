@@ -147,12 +147,18 @@ class Network:
         node = self._nodes[host]
         node.send_verified_ids(list(self._users.keys()))
 
+    # Used by filemanager to store replicas on other hosts in network
     def send_replica(self, host, filename, id, part_num, total_parts):
         if not self.connected(host):
             print("Tried to send replica to disconnected host")
             return
         self._nodes[host].add_file(file_name, id, part_num, total_parts)
-    
+
+    # Called by doofus to broadcast possession of replica to network
+    def broadcast_replica(file_name, uploader, part_num, total_parts):
+        for host in list(self._connected):
+            self._nodes[host].replica_alert(file_name, uploader, part_num, total_parts)
+        
     def send_dfs(self, files, host):
         if not host in self._nodes:
             return
