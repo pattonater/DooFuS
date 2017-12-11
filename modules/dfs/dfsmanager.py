@@ -22,7 +22,6 @@ class DFSManager:
     def _compute_replica_count(priority, node_count):
         return node_count
 
-
     def get_DFS_ref(self):
         return self._fs
 
@@ -81,12 +80,28 @@ class DFSManager:
         ## remove from _fs
         self._fs.remove_file(filename)
 
+    ## Throws DFSManagerDownloadError exception. Please catch it.
     def download_file(self, filename, dst):
-        ## see who has replica (if you do, skip next steps)
-        ## request file from one of replicas
-        ## if fails to receive from all replicas, throw exception
-        ## write bytes to dst
-        pass
+        ## Check if you are a replica
+        file_replicas = self._fs.list_files()
+        if self._id in file_replicas:
+            try:
+                from shutil import copy2
+                copy2("replicas/" + filename, "files/" + filename)
+                return
+            except IOError:
+                ## Something bad happened. Let's try to get it from somebody else.
+                pass
+
+        ## Find active replicas
+        active_hosts  = self._network._connected
+        active_replicas = list(filter(lambda host: host in file_replicas, active_hosts))
+
+        if len(active_replicas) == 0:
+            raise DFSManagerDownloadError(filename, "No active replicas of file")
+
+        self._network.request_file(active_replicas[0], filename, 1, 1)
+
 
     def delete_file(self, filename):
         ## remove from disk (if present)
@@ -116,7 +131,11 @@ class DFSManagerError(Exception):
 
 class DFSManagerIOError(DFSManagerError):
     def __init__(self, msg):
-        DFSError.__init__(self, "DFS i/o error: \n" + e)
+        DFSError.__init__(self, "DFSManager i/o error: \n" + msg)
+
+class DFSManagerDownloadError(DFSManagerError):
+    def __init__(self, filename, additional = ""):
+        DFSError.__init__(self, "DFSManager download file error: " + additional + "\nfilename: " + filename)
 
 class DFSManagerAddFileError(DFSManagerError):
     def __init__(self, filename):
