@@ -14,20 +14,27 @@ import traceback
 def _test_dfs():
     import modules.dfs.dfs as dfs
 
-    prefix = "DFS test: "
+    prefix = "DFS test: ".ljust(15)
 
     try:
         # Test DFS instantiation
         file_system = dfs.DFS("test_dfs.json")
 
-        # Remove and add file
-        file_system.delete_file("newfile")
+        # Add and remove and add file
         ls = file_system.list_files()
+
         file_system.add_file("newfile", "userA")
         if len(ls) == len(file_system.list_files()):
-           print(prefix + "ERROR: list_files() did not reflect change in file list")
+           print(prefix + "ERROR: list_files() did not reflect change in file list.")
            return 0
+        
+        file_system.delete_file("newfile")
+        if len(file_system.list_files()) != 0:
+            print(prefix + "ERROR: delete_file() did not remove file form file list.")
+            return 0
 
+        file_system.add_file("newfile", "userA")
+        
         # Try to remove non-existent file
         try:
             file_system.delete_file("ff")
@@ -54,7 +61,7 @@ def _test_dfs():
     return 1
 
 def _test_Msg_abstraction():
-    prefix = "Msg abstraction test: "
+    prefix = "Msg abstraction test: ".ljust(15)
     try:
         from modules.network.msg import Msg
         if not Msg.VERIFY == "V":
@@ -67,6 +74,31 @@ def _test_Msg_abstraction():
         traceback.print_tb(e.__traceback__)
         return 0
 
+def _test_dfs_manager():
+    prefix = "DFSManager: ".ljust(15)
+    try:
+        import modules.dfs.dfsmanager as manager
+        import modules.dfs.dfs as dfs
+
+        m = manager.DFSManager(None, "tester", "testmanagerdfs.json")
+
+        m.acknowledge_replica("test.txt", "tester", "127.0.0.1")
+
+        try:
+            m.upload_file("test.txt")
+            print(prefix + "ERROR: Was able to upload pre-existing file.")
+            return 0
+        except dfs.DFSAddFileError:
+            pass
+    except Exception as e:
+        print(prefix + str(e))
+        traceback.print_tb(e.__traceback__)
+        return 0
+
+    print(prefix + "SUCCESS")
+    return 1
+
+
 if __name__ == "__main__":
     outcome = 0
 
@@ -77,6 +109,9 @@ if __name__ == "__main__":
 
         if test == "Msg":
             outcome += _test_Msg_abstraction()
+
+        if test == "dfsm":
+            outcome += _test_dfs_manager()
 
         ## ADDITIONAL MODULES:
         #elif test == "othertestmodule":
