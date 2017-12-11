@@ -123,6 +123,10 @@ def listen_for_messages(conn, host):
                     handle_dfs_info_message(msg)
                 elif type == Message.Tags.STORE_REPLICA:
                     handle_store_replica(msg, host)
+                elif type == Message.Tags.REQUEST_FILE:
+                    handle_request_file(msg, host)
+                elif type == Message.Tags.FILE_SLICE:
+                    handle_file_slice(msg, host)
     #            elif type == Message.Tags.FILE:
      #               handle_file(msg, host)
 #                elif type == Message.Tags.CHUNK:
@@ -134,6 +138,7 @@ def listen_for_messages(conn, host):
                 elif type == Message.Tags.UPLOAD_FILE:
                     handle_upload(msg, host)
 
+'''                    
 def store_replica(msg):
     msglist = msg.split(Message.DELIMITER)
     filename = msg[0]
@@ -144,6 +149,7 @@ def store_replica(msg):
 
     print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader))
     manager.write_replica(name, uploader, part, total, data)
+'''
 
 def handle_store_replica(msg, host):
     msglist = msg.split(Message.DELIMITER)
@@ -153,12 +159,23 @@ def handle_store_replica(msg, host):
     total_parts = msg[3]
     file = msg[4]
     logger.info("Receiving " + uploader + "'s file " + file_name + " from " + host + "...")
-    filewriter.write(file_name, part_num, total_parts, file)
+    manager.write_replica(file_name, uploader, part_num, total_parts, file)
     logger.info("Broadcasting successful replica reception to network")
     network.broadcast_replica(file_name, uploader, part_num, total_parts)
     logger.info("Finished alerting other nodes in network")
-    
 
+def handle_request_file(msg, host):
+    msglist = msg.split(Message.DELIMITER)
+    file_name = msg[0]
+    part_num = msg[1]
+    total_parts = msg[2]
+    logger.info("Request for part %d/%d of %s from $s" % (part_num, total_parts, file_name, host))
+    file = filewriter.read_slice(file_name, part_num)
+    network.serve_file_request(file_name, part_num, total_parts, host, file)
+
+def handle_file_slice(msg, host):
+    
+    
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)
     network.add_users(ids)
