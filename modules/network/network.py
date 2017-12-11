@@ -134,6 +134,13 @@ class Network:
             return
         
         self._nodes[host].send_file(file_name)
+
+    def add_file(self, host, file_name, my_id):
+        if not self.connected(host):
+            self._logger.info("Cannot upload file to disconnected host")
+            return
+        print ("hello from network!")
+        self._nodes[host].add_file(file_name, my_id)
     
     def send_network_info(self, host):
         if not host in self._nodes:
