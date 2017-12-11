@@ -23,20 +23,11 @@ class DFSManager:
         ## EXCEPTIONS
         pass
 
-    def add_replica(self, filename):
-        ## add filename to local directory
-        self._filewriter.add_file(filename)
-    
-    def add_replica_chunk(self, filename, bytes, index):
-        ## write bytes to filename
-        self._filewriter.add_chunk(filename, index)
-        ## throw exceptions if fail yadda yadda
-
-    def write_replica(self, filename):
-        ## write file to disk
-        self._filewriter.write(filename)
-        ## add self to replica list on _fs
-        self.acknowledge_file(filename)
+    def store_replica(self, filename, uploader, part, total, data):
+        ## add replica to dfs
+        acknowledge_replica(filename, uploader)
+        ## write data to filename
+        self._filewriter.write(filename, part, total, data)
 
     def dump_replica(self, filename):
         ## remove from disk
