@@ -23,6 +23,10 @@ class DFSManager:
         return node_count
 
 
+    def get_log(self):
+        return self._fs.return_log()
+
+
     def acknowledge_replica(self, filename, uploader, replica_host):
         if self._fs.check_file(filename, uploader):
             self._fs.add_replica(filename, uploader, replica_host)
