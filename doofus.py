@@ -8,7 +8,7 @@ import logging
 import os
 
 from modules.network.network import Network
-from modules.network.messagetags import MessageTags
+from modules.network.message import Message
 from modules.network.entity import Entity
 import modules.dfs.dfs as dfs # DFS exceptions
 from modules.dfs.dfs import DFS # DFS itself
@@ -81,24 +81,9 @@ def listen_for_messages(conn, host):
 
         # determine the type of message
         type = bytes.decode(conn.recv(1))
-
         if type:
             # try to determine the size of the message
-            size = ""
-            max_digits = 10
-            num_digits = 0
-            while True:
-                digit = bytes.decode(conn.recv(1))
-                if digit == MessageTags.DELIMITER:
-                    break
-                size += digit
-
-                # don't let size be more than 10 digits
-                num_digits += 1
-                if num_digits >= max_digits:
-                    size = ""
-                    break
-
+            size =  bytes.decode(conn.recv(Message.LENGTH_SIZE))
             if size:
                 # recieve the rest of the message (the actual data)
                 size = int(size)
@@ -111,7 +96,7 @@ def listen_for_messages(conn, host):
         # handle the actual message
         if not verified:
                 # don't handle any messages from unverified hosts except verify
-                if type == MessageTags.VERIFY:
+                if type == Message.Tags.IDENTITY:
                     time_to_die = not handle_verify_msg(msg, host)
 
                 if not time_to_die:
@@ -124,22 +109,22 @@ def listen_for_messages(conn, host):
                 time_to_die = True
             elif well_formatted:
                 # got an actual message
-                logger.debug("got message %s%d~%s" % (type,size,msg))
+                logger.debug("got message %s:%d:%s" % (type,size,msg))
 
-                if type == MessageTags.HEARTBEAT:
+                if type == Message.Tags.HEARTBEAT:
                     logger.debug("Received heartbeat from %s" % (host))
                     network.record_heartbeat(host)
-                elif type == MessageTags.HOST:
+                elif type == Message.Tags.HOST_JOINED:
                     handle_host_msg(msg, host)
-                elif type == MessageTags.USERS:
+                elif type == Message.Tags.USER_INFO:
                     handle_users_msg(msg)
-                elif type == MessageTags.FILE:
-                    handle_file(msg, host)
-                elif type == MessageTags.CHUNK:
-                    handle_chunk(msg)
-                elif type == MessageTags.EOF:
-                    handle_EOF(msg, host)
-                elif type == MessageTags.POKE:
+    #            elif type == Message.Tags.FILE:
+     #               handle_file(msg, host)
+#                elif type == Message.Tags.CHUNK:
+ #                   handle_chunk(msg)
+  #              elif type == Message.Tags.EOF:
+   #                 handle_EOF(msg, host)
+                elif type == Message.Tags.POKE:
                     print("%s poked you!" % network.id(host))
 
 def handle_file(filename, host):
@@ -149,7 +134,7 @@ def handle_file(filename, host):
 
 def handle_chunk(msg):
     #TODO should probably send num of total chunks and which this is for info verification
-    msglist = msg.split(MessageTags.DELIMITER)
+    msglist = msg.split(Message.DELIMITER)
     filename = msglist[0]
     chunk = msglist[1]
     filewriter.add_chunk(filename, chunk)
@@ -160,7 +145,7 @@ def handle_EOF(filename, host):
     dfs.add_file(filename, network.id(host))
 
 def handle_users_msg(msg):
-    ids = msg.split(MessageTags.DELIMITER)
+    ids = msg.split(Message.DELIMITER)
     network.add_users(ids)
 
 def handle_verify_msg(id, host):
@@ -319,13 +304,6 @@ if __name__ == "__main__":
     listen.bind((my_host, my_port))
     listen.listen()
     threading.Thread(target=listen_for_nodes, args=(listen,)).start()
-
-
-    # attempt to connect to previously seen nodes
-    # should this be on a separate thread?
-    # pros: user can interact with program right away
-    # cons: possible race conditions?
-#    threading.Thread(target=connect_to_network).start()
 
     # start up heatbeat thread
     threading.Thread(target=send_heartbeats).start()

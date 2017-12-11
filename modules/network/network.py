@@ -91,7 +91,7 @@ class Network:
         if host in self._names:
             id = self._names[host]
             self._users[id] = None
-            self._names.remove(host)
+            self._names.pop(host)
 
     def broadcast_heartbeats(self):
         try:
@@ -116,7 +116,7 @@ class Network:
             self._logger.info("Network: Broadcasting %s" % (new_host))
             for host in self._connected:
                 if host in self._verified and not host == new_host:
-                    self._nodes[host].send_host(new_host)
+                    self._nodes[host].send_host_joined(new_host)
         except RuntimeError:
             # This is from _connected changing size
             pass
