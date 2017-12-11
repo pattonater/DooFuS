@@ -118,6 +118,8 @@ def listen_for_messages(conn, host):
                     handle_host_msg(msg, host)
                 elif type == Message.Tags.USER_INFO:
                     handle_users_msg(msg)
+                elif type == Message.Tags.STORE_REPLICA:
+                    handle_store_replica(msg, host)
     #            elif type == Message.Tags.FILE:
      #               handle_file(msg, host)
 #                elif type == Message.Tags.CHUNK:
@@ -145,6 +147,21 @@ def handle_EOF(filename, host):
     print("Finished receiving %s" % (filename))
     filewriter.write(filename)
 #    dfs.add_file(filename, network.id(host))
+
+def handle_store_replica(msg, host):
+
+    msglist = msg.split(Message.DELIMITER)
+    file_name = msg[0]
+    uploader = msg[1]
+    part_num = msg[2]
+    total_parts = msg[3]
+    file = msg[4]
+    logger.info("Receiving " + uploader + "'s file " + file_name + " from " + host + "...")
+    filewriter.write(file_name, part_num, total_parts, file)
+    logger.info("Broadcasting successful replica reception to network")
+    network.broadcast_replica()
+    logger.info("Finished alerting other nodes in network")
+    
 
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)

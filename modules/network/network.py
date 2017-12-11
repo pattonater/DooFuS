@@ -147,8 +147,11 @@ class Network:
         node = self._nodes[host]
         node.send_verified_ids(list(self._users.keys()))
 
-    def send_replica(self, host, filename, my_id):
-        pass
+    def send_replica(self, host, filename, id, part_num, total_parts):
+        if not self.connected(host):
+            print("Tried to send replica to disconnected host")
+            return
+        self._nodes[host].add_file(file_name, id, part_num, total_parts)
     
     def send_dfs(self, files, host):
         if not host in self._nodes:

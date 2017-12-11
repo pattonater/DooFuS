@@ -88,23 +88,23 @@ class Node:
         return True
 
 
-    def send_file(self, file_name):
+    def send_file(self, file_name, id, part_num, total_parts):
         # read file in binary mode
         file = open("files/" + file_name, "rb")
-
+        
         print("Sending " + file_name +  " to " + self._host + "...") 
-        self._send_message(Message.Tags.FILE, [file_name])
+        self._send_message(Message.Tags.STORE_REPLICA, [file_name, id, 1, 1, file])
 
-        while True:
+#        while True:
             #TODO change chunk size and make constant
-            chunk = file.read(8)
+ #           chunk = file.read(8)
             #print ("Sending chunk: " + bytes.decode(chunk))
-            if not chunk:
-                break  # EOF
+  #          if not chunk:
+   #             break  # EOF
             
-            self._send_message(Message.Tags.CHUNK, [file_name, bytes.decode(chunk)])
+    #        self._send_message(Message.Tags.CHUNK, [file_name, bytes.decode(chunk)])
 
-        self._send_message(Message.Tags.EOF, [file_name])
+     #   self._send_message(Message.Tags.EOF, [file_name])
 
         print("Finished sending %s to %s" % (file_name, self._host))
         file.close()
