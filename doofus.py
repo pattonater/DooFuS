@@ -27,7 +27,7 @@ my_port = None
 my_id = None
 
 network = None
-
+manager = None
 dfs = None
 
 filewriter = None
@@ -142,8 +142,8 @@ def store_replica(msg):
     total = msg[3]
     data = msg[4]
 
-    print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader)
-    dfs_manager.write_replica(name, uploader, part, total, data)
+    print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader))
+    manager.write_replica(name, uploader, part, total, data)
 
 def handle_store_replica(msg, host):
     msglist = msg.split(Message.DELIMITER)
