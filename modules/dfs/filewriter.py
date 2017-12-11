@@ -6,24 +6,17 @@ class Filewriter:
     def __init__(self):
         self._files = {}
 
-    def add_file(self, filename):
+    def write(self, filename, part, total, data):
         if not filename in self._files:
-            self._files[filename] = File(filename)
-        else:
-            self._files[filename].clear_contents()
-
-    def add_chunk(self, filename, chunk, index):
-        self._files[filename].add_chunk(chunk, index)
-
-    def write(self, filename):
-        #print("Writing " + filename)
-        self._files[filename].write()
+            self._files[filename] = File(filename, total)
+        
+        self._files[filename].write(part, data)
 
     def read(self, filename):
         return self._files[filename].read()
 
-    def get_chunk_indices(self, filename):
-        return self._files[filename].get_chunk_indices()
+    def get_parts(self, filename):
+        return self._files[filename].get_parts()
 
     def remove(self, filename):
         self._files[filename].remove()
