@@ -91,7 +91,7 @@ class Network:
         if host in self._names:
             id = self._names[host]
             self._users[id] = None
-            self._names.remove(host)
+            self._names.pop(host)
 
     def broadcast_heartbeats(self):
         try:
@@ -116,7 +116,7 @@ class Network:
             self._logger.info("Network: Broadcasting %s" % (new_host))
             for host in self._connected:
                 if host in self._verified and not host == new_host:
-                    self._nodes[host].send_host(new_host)
+                    self._nodes[host].send_host_joined(new_host)
         except RuntimeError:
             # This is from _connected changing size
             pass
@@ -133,6 +133,12 @@ class Network:
             return
         
         self._nodes[host].send_file(file_name)
+
+    def add_file(self, host, file_name, my_id):
+        if not self.connected(host):
+            self._logger.info("Cannot upload file to disconnected host")
+            return
+        self._nodes[host].add_file(file_name, my_id)
     
     def send_network_info(self, host):
         if not host in self._nodes:
@@ -141,7 +147,9 @@ class Network:
         node = self._nodes[host]
         node.send_verified_ids(list(self._users.keys()))
 
-
+    def send_replica(self, host, filename, my_id):
+        pass
+    
     def send_dfs(self, files, host):
         if not host in self._nodes:
             return

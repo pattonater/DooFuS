@@ -6,7 +6,7 @@
 
 from threading import Lock
 import modules.dfs.dfs as dfs
-
+from .filewriter import Filewriter
 
 class DFSManager:
 
@@ -15,6 +15,7 @@ class DFSManager:
         self._id        = my_id
         self._fs        = dfs.DFS(log_name)
         self._file_list = self._fs.list_files()
+        self._filewriter = Filewriter()
 
     # Based on our failure model, calculates number of replicas needed
     # given the priority and number of nodes
@@ -54,16 +55,26 @@ class DFSManager:
             i += 1
 
 
-    def store_replica(self, filename, bytes):
-        ## add self to replica list on _fs 
+    def add_replica(self, filename):
+        ## add filename to local directory
+        self._filewriter.add_file(filename)
+    
+    def add_replica_chunk(self, filename, bytes, index):
         ## write bytes to filename
+        self._filewriter.add_chunk(filename, index)
         ## throw exceptions if fail yadda yadda
-        pass
+
+    def write_replica(self, filename):
+        ## write file to disk
+        self._filewriter.write(filename)
+        ## add self to replica list on _fs
+        self.acknowledge_file(filename)
 
     def dump_replica(self, filename):
         ## remove from disk
+        self._filewriter.remove(filename)
         ## remove from _fs
-        pass
+        self._fs.remove_file(filename)
 
     def download_file(self, filename, dst):
         ## see who has replica (if you do, skip next steps)
@@ -111,3 +122,4 @@ class DFSManagerRemoveFileError(DFSManagerError):
     def __init__(self, filename):
         DFSError.__init__(self, "DFS remove file error: Could not add file\n"
             + "filename: " + filename) 
+

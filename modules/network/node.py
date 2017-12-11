@@ -1,6 +1,6 @@
 import time
 from threading import Lock # _lock
-from .messagetags import MessageTags
+from .message import Message
 
 # This class will represent other nodes in the system
 # Soft state:
@@ -51,36 +51,34 @@ class Node:
         finally:
             self._lock.release()
 
-#    def set_id(self, id):
- #       if self._id:
-  #          #print("Hey ids can't change......")
-   #         pass
-    #    self._id = id
     def send_poke(self):
-        return self._send_message(MessageTags.POKE, ["poke"])
+        return self._send_message(Message.Tags.POKE, ["poke"])
     
     # Sends single byte message as heartbeat to host. Primarily used to test
     # the connection; if it doesn't go through, we assume the host is down.
     def send_heartbeat(self):
-        return self._send_message(MessageTags.HEARTBEAT, ["hi"])
+        return self._send_message(Message.Tags.HEARTBEAT, ["hi"])
 
     # Identifies self to host
     def send_verification(self, id):
-        return self._send_message(MessageTags.VERIFY, [id])
+        return self._send_message(Message.Tags.IDENTITY, [id])
 
     # Sends new node information to host
-    def send_host(self, host):
-        return self._send_message(MessageTags.HOST, [host])
+    def send_host_joined(self, host):
+        return self._send_message(Message.Tags.HOST_JOINED, [host])
 
     def send_verified_ids(self, ids):
-        return self._send_message(MessageTags.USERS, ids)
+        return self._send_message(Message.Tags.USER_INFO, ids)
+
+    def add_file(self, file_name, my_id):
+        return self._send_message(Message.Tags.UPLOAD_FILE, [file_name, my_id])
 
     # Since network.py will theoretically be sending heartbeats and other messages on different
     # threads (but on the same port), it's important to lock around the
     def _send_message(self, tag, data):
         self._lock.acquire()
         try:
-            msg = self.data_str(tag, data)
+            msg = Message.data_to_str(tag, data)
             self._conn.send(str.encode(msg))
         except:
             self._lock.release()
@@ -90,19 +88,12 @@ class Node:
         return True
 
 
-    def data_str(self, tag, data):
-        data_str = ""
-        for item in data:
-            data_str += MessageTags.DELIMITER + str(item)
-        msg = tag + str(len(data_str) - 1) + data_str
-        return msg
-
     def send_file(self, file_name):
         # read file in binary mode
         file = open("files/" + file_name, "rb")
 
         print("Sending " + file_name +  " to " + self._host + "...") 
-        self._send_message(MessageTags.FILE, [file_name])
+        self._send_message(Message.Tags.FILE, [file_name])
 
         while True:
             #TODO change chunk size and make constant
@@ -111,9 +102,10 @@ class Node:
             if not chunk:
                 break  # EOF
             
-            self._send_message(MessageTags.CHUNK, [file_name, bytes.decode(chunk)])
+            self._send_message(Message.Tags.CHUNK, [file_name, bytes.decode(chunk)])
 
-        self._send_message(MessageTags.EOF, [file_name])
+        self._send_message(Message.Tags.EOF, [file_name])
 
         print("Finished sending %s to %s" % (file_name, self._host))
         file.close()
+

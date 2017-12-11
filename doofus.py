@@ -8,7 +8,7 @@ import logging
 import os
 
 from modules.network.network import Network
-from modules.network.messagetags import MessageTags
+from modules.network.message import Message
 from modules.network.entity import Entity
 import modules.dfs.dfs as dfs # DFS exceptions
 from modules.dfs.dfs import DFS # DFS itself
@@ -81,24 +81,9 @@ def listen_for_messages(conn, host):
 
         # determine the type of message
         type = bytes.decode(conn.recv(1))
-
         if type:
             # try to determine the size of the message
-            size = ""
-            max_digits = 10
-            num_digits = 0
-            while True:
-                digit = bytes.decode(conn.recv(1))
-                if digit == MessageTags.DELIMITER:
-                    break
-                size += digit
-
-                # don't let size be more than 10 digits
-                num_digits += 1
-                if num_digits >= max_digits:
-                    size = ""
-                    break
-
+            size =  bytes.decode(conn.recv(Message.LENGTH_SIZE))
             if size:
                 # recieve the rest of the message (the actual data)
                 size = int(size)
@@ -111,7 +96,7 @@ def listen_for_messages(conn, host):
         # handle the actual message
         if not verified:
                 # don't handle any messages from unverified hosts except verify
-                if type == MessageTags.VERIFY:
+                if type == Message.Tags.IDENTITY:
                     time_to_die = not handle_verify_msg(msg, host)
 
                 if not time_to_die:
@@ -124,23 +109,25 @@ def listen_for_messages(conn, host):
                 time_to_die = True
             elif well_formatted:
                 # got an actual message
-                logger.debug("got message %s%d~%s" % (type,size,msg))
+                logger.debug("got message %s:%d:%s" % (type,size,msg))
 
-                if type == MessageTags.HEARTBEAT:
+                if type == Message.Tags.HEARTBEAT:
                     logger.debug("Received heartbeat from %s" % (host))
                     network.record_heartbeat(host)
-                elif type == MessageTags.HOST:
+                elif type == Message.Tags.HOST_JOINED:
                     handle_host_msg(msg, host)
-                elif type == MessageTags.USERS:
+                elif type == Message.Tags.USER_INFO:
                     handle_users_msg(msg)
-                elif type == MessageTags.FILE:
-                    handle_file(msg, host)
-                elif type == MessageTags.CHUNK:
-                    handle_chunk(msg)
-                elif type == MessageTags.EOF:
-                    handle_EOF(msg, host)
-                elif type == MessageTags.POKE:
+    #            elif type == Message.Tags.FILE:
+     #               handle_file(msg, host)
+#                elif type == Message.Tags.CHUNK:
+ #                   handle_chunk(msg)
+  #              elif type == Message.Tags.EOF:
+   #                 handle_EOF(msg, host)
+                elif type == Message.Tags.POKE:
                     print("%s poked you!" % network.id(host))
+                elif type == Message.Tags.UPLOAD_FILE:
+                    handle_upload(msg, host)
 
 def handle_file(filename, host):
     print("Receiving file " + filename + " from " + host + "...")
@@ -149,7 +136,7 @@ def handle_file(filename, host):
 
 def handle_chunk(msg):
     #TODO should probably send num of total chunks and which this is for info verification
-    msglist = msg.split(MessageTags.DELIMITER)
+    msglist = msg.split(Message.DELIMITER)
     filename = msglist[0]
     chunk = msglist[1]
     filewriter.add_chunk(filename, chunk)
@@ -157,10 +144,10 @@ def handle_chunk(msg):
 def handle_EOF(filename, host):
     print("Finished receiving %s" % (filename))
     filewriter.write(filename)
-    dfs.add_file(filename, network.id(host))
+#    dfs.add_file(filename, network.id(host))
 
 def handle_users_msg(msg):
-    ids = msg.split(MessageTags.DELIMITER)
+    ids = msg.split(Message.DELIMITER)
     network.add_users(ids)
 
 def handle_verify_msg(id, host):
@@ -188,6 +175,13 @@ def handle_host_msg(new_host, host):
         logger.info("Notified %s online by %s" % (new_host, host))
         network.connect_to_host(new_host)
 
+def handle_upload(msg, host):
+    msglist = msg.split(Message.DELIMITER)
+    filename = msglist[0]
+    uploader = msglist[1]
+    print("hello upload")
+    dfs.add_file(filename, uploader)
+        
 #########################################
 ## Thread for recieving new 1;5B1;5Bconnections
 #########################################
@@ -250,10 +244,12 @@ def add_file(filename):
         if file.get("filename") == filename:
             print("File already exists. Delete the current version or choose a new name.")
             return
-    
     # send to everyone
+    print("hello?")
     for host in network.get_connected_nodes():
-        network.send_file(host, filename)
+        print("about to tell host %s to add file" % (host))
+        network.add_file(host, filename, my_id) # Send metadata telling hosts about new file
+#        network.send_file(host, filename)
 
     # add to dfs TODO add replicas
     dfs.add_file(filename, my_id)
@@ -319,13 +315,6 @@ if __name__ == "__main__":
     listen.bind((my_host, my_port))
     listen.listen()
     threading.Thread(target=listen_for_nodes, args=(listen,)).start()
-
-
-    # attempt to connect to previously seen nodes
-    # should this be on a separate thread?
-    # pros: user can interact with program right away
-    # cons: possible race conditions?
-#    threading.Thread(target=connect_to_network).start()
 
     # start up heatbeat thread
     threading.Thread(target=send_heartbeats).start()

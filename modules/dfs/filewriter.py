@@ -12,9 +12,19 @@ class Filewriter:
         else:
             self._files[filename].clear_contents()
 
-    def add_chunk(self, filename, chunk):
-        self._files[filename].add_chunk(chunk)
+    def add_chunk(self, filename, chunk, index):
+        self._files[filename].add_chunk(chunk, index)
 
     def write(self, filename):
         #print("Writing " + filename)
         self._files[filename].write()
+
+    def read(self, filename):
+        return read self._files[filename].read()
+
+    def get_chunk_indices(self, filename):
+        return self._files[filename].get_chunk_indices()
+
+    def remove(self, filename):
+        self._files[filename].remove()
+        del self._files[filename]
