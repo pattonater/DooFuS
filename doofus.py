@@ -119,6 +119,8 @@ def listen_for_messages(conn, host):
                     handle_host_msg(msg, host)
                 elif type == Message.Tags.USER_INFO:
                     handle_users_msg(msg)
+                elif type == Message.Tags.DFS_INFO:
+                    handle_dfs_info_message(msg)
     #            elif type == Message.Tags.FILE:
      #               handle_file(msg, host)
 #                elif type == Message.Tags.CHUNK:
@@ -150,6 +152,10 @@ def handle_EOF(filename, host):
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)
     network.add_users(ids)
+
+def handle_dfs_info_message(dfs_json_str):
+    dfs_json = json.loads(dfs_json_str)
+    manager.update_with_dfs_json(dfs_json)
 
 def handle_verify_msg(id, host):
     logger.info("Received id from %s" % (host))
