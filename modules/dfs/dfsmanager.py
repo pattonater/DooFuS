@@ -70,7 +70,7 @@ class DFSManager:
 
     def store_replica(self, filename, uploader, part, total, data):
         ## add replica to dfs
-        acknowledge_replica(filename, uploader)
+        self.acknowledge_replica(filename, uploader, self._id)
         ## write data to filename
         self._filewriter.write(filename, part, total, data)
 
