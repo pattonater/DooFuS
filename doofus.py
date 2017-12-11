@@ -12,6 +12,7 @@ from modules.network.message import Message
 from modules.network.entity import Entity
 import modules.dfs.dfs as dfs # DFS exceptions
 from modules.dfs.dfs import DFS # DFS itself
+import modules.dfs.dfsmanager as DFSM
 
 from modules.dfs.filewriter import Filewriter # writes files
 
@@ -131,25 +132,18 @@ def listen_for_messages(conn, host):
                 elif type == Message.Tags.UPLOAD_FILE:
                     handle_upload(msg, host)
 
-def handle_file(filename, host):
-    print("Receiving file " + filename + " from " + host + "...")
-    # prepend to filename if testing locally
-    filewriter.add_file(filename)
-
-def handle_chunk(msg):
-    #TODO should probably send num of total chunks and which this is for info verification
+def store_replica(msg):
     msglist = msg.split(Message.DELIMITER)
-    filename = msglist[0]
-    chunk = msglist[1]
-    filewriter.add_chunk(filename, chunk)
+    filename = msg[0]
+    uploader = msg[1]
+    part = msg[2]
+    total = msg[3]
+    data = msg[4]
 
-def handle_EOF(filename, host):
-    print("Finished receiving %s" % (filename))
-    filewriter.write(filename)
-#    dfs.add_file(filename, network.id(host))
+    print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader)
+    dfs_manager.write_replica(name, uploader, part, total, data)
 
 def handle_store_replica(msg, host):
-
     msglist = msg.split(Message.DELIMITER)
     file_name = msg[0]
     uploader = msg[1]
@@ -299,8 +293,6 @@ def print_help():
 #########################################
 if __name__ == "__main__":
 
-    dfs = DFS("modules/dfs/dfs.json")
-
     filewriter = Filewriter()
 
     local_test = len(sys.argv) > 2
@@ -315,6 +307,9 @@ if __name__ == "__main__":
 
     profile = Entity(my_host, my_port, my_id)
     network = Network(profile, local_test)
+
+    manager = DFSM.DFSManager(network, my_id, "modules/dfs/dfs.json")
+    dfs = manager.get_DFS_ref()
 
     log = Log()
     logger = log.get_logger()
