@@ -18,8 +18,8 @@ from copy import deepcopy   # for returning copy of _log
 class DFS:
 
     # Initializes the DFS. Reads from the log file.
-    def __init__(self, log_name = None, update_period = None):
-        self._UPDATE_PERIOD = update_period if update_period else 1
+    def __init__(self, log_name = None, update_period = 1):
+        self._UPDATE_PERIOD = update_period
         self._current_update = 0
         self._log_name = log_name if log_name else "dfs.json"
         self._lock = Lock()
@@ -98,6 +98,9 @@ class DFS:
     # Returns list of files
     def list_files(self):
         return deepcopy(self._log["files"])
+
+    def list_files_ref(self):
+        return self._log["files"]
 
     # Forces a write to disk
     def update_disk(self):
