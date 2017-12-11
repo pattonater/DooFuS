@@ -97,7 +97,14 @@ def listen_for_messages(conn, host):
         if not verified:
                 # don't handle any messages from unverified hosts except verify
                 if type == Message.Tags.IDENTITY:
-                    time_to_die = not handle_verify_msg(msg, host)
+                    verified = handle_verify_msg(msg, host)
+
+                    if verified:
+                        network.send_network_info(host)
+                        network.send_dfs("hahahaha im not a dfs")
+                    else:
+                        time_to_die = True
+                    
 
                 if not time_to_die:
                     # kill connection if not verified within 2 seconds
@@ -197,10 +204,14 @@ def user_interaction():
         if text == "nodes":
             print_node_list()
         elif text.startswith("upload"):
-            add_file(text[7:])
+            file = text[7:]
+            add_file(file)
+        elif text.startswith("download"):
+            file = text[9:]
+            # tell dfs manager to download
         elif text == "files":
             print_file_list()
-        elif text[:6] == "delete":
+        elif text.startwith("delete"):
             dfs.delete_file(text[7:])
         elif text == "help":
             print_help()
@@ -215,7 +226,8 @@ def user_interaction():
         elif text == "myinfo":
             print("%s as %s" % (my_host, my_id))
         elif text.startswith("verify"):
-            network.add_users([text[7:]])
+            user = text[7:]
+            network.add_users([user])
         elif text == "refresh":
             print("I don't know how")
         elif text == "clear files":
@@ -225,9 +237,12 @@ def user_interaction():
         elif text == "info":
             log.toggle_info()
         elif text.startswith("poke"):
-            network.send_poke(text[5:])
+            user = text[5:]
+            network.send_poke(user)
         elif text == "users":
             print(network.users())
+
+
             
 
 def add_file(filename):

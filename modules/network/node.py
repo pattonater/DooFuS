@@ -28,9 +28,6 @@ class Node:
     def host(self):
         return self._host
 
-#    def id(self):
- #       return self._id
-
     # Not currently useful
     def record_heartbeat(self):
         self._last_heartbeat = time.time()
@@ -46,26 +43,30 @@ class Node:
             if self._conn:
                 self._conn.close()
                 self._conn = None
-        except:
+        except Exception as e:
+            # if the logger is ever passed in, put this info in there
             pass
         finally:
             self._lock.release()
 
     def send_poke(self):
-        return self._send_message(Message.Tags.POKE, ["poke"])
+        return self._send_message(Message.Tags.POKE, "poke")
     
     # Sends single byte message as heartbeat to host. Primarily used to test
     # the connection; if it doesn't go through, we assume the host is down.
     def send_heartbeat(self):
-        return self._send_message(Message.Tags.HEARTBEAT, ["hi"])
+        return self._send_message(Message.Tags.HEARTBEAT, "hi")
+
+    def send_dfs(self, dfs_json_str):
+        return self._send_message(Message.Tags.DFS_INFO, dfs_json_str)
 
     # Identifies self to host
     def send_verification(self, id):
-        return self._send_message(Message.Tags.IDENTITY, [id])
+        return self._send_message(Message.Tags.IDENTITY, id)
 
     # Sends new node information to host
     def send_host_joined(self, host):
-        return self._send_message(Message.Tags.HOST_JOINED, [host])
+        return self._send_message(Message.Tags.HOST_JOINED, host)
 
     def send_verified_ids(self, ids):
         return self._send_message(Message.Tags.USER_INFO, ids)

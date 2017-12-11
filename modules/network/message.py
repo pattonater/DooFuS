@@ -24,7 +24,14 @@ class Message:
     @classmethod
     def data_to_str(cls, tag, data):
         MAX_SIZE = cls.LENGTH_SIZE
-        data_str = cls.DELIMITER.join(data)
+
+        if isinstance(data, list):
+            data_str = cls.DELIMITER.join(data)
+        elif isinstance(data, string):
+            data_str = data
+        else:
+            print("data_to_str only supposrt lists and strings")
+            return False
 
         size = str(len(data_str))
         padding = MAX_SIZE - len(size)
