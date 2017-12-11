@@ -139,7 +139,7 @@ class Network:
             return
 
         node = self._nodes[host]
-        node.send_verified_ids(self._users.keys())
+        node.send_verified_ids(list(self._users.keys()))
 
 
     def send_dfs(self, files, host):
@@ -182,7 +182,7 @@ class Network:
                 
             self._verified.add(host)
 
-            # for now
+            # store state for linking hosts and ids
             self._users[id] = host
             self._names[host] = id
 
@@ -227,7 +227,7 @@ class Network:
         return host in self._verified
 
     def users(self):
-        return self._users.keys()
+        return list(self._users.keys())
 
     def id(self, host):
         if host not in self._users:
