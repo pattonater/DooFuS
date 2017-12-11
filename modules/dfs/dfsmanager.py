@@ -10,12 +10,12 @@ from modules.dfs.filewriter import Filewriter
 
 class DFSManager:
 
-    def __init__(self, network, my_id, log_name = None):
+    def __init__(self, network, my_id, filewriter, log_name = None):
         self._network   = network
         self._id        = my_id
         self._fs        = dfs.DFS(log_name)
         self._file_list = self._fs.list_files()
-        self._filewriter = Filewriter()
+        self._filewriter = filewriter
 
     # Based on our failure model, calculates number of replicas needed
     # given the priority and number of nodes

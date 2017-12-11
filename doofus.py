@@ -30,6 +30,8 @@ network = None
 
 dfs = None
 
+manager = None
+
 filewriter = None
 
 log = None
@@ -119,8 +121,10 @@ def listen_for_messages(conn, host):
                     handle_host_msg(msg, host)
                 elif type == Message.Tags.USER_INFO:
                     handle_users_msg(msg)
-                elif type == STORE_REPLICA:
+                elif type == Message.Tags.STORE_REPLICA:
                     store_replica(msg)
+                elif type == Message.Tags.FILE_SLICE:
+                    write_slice(msg)
                 elif type == Message.Tags.POKE:
                     print("%s poked you!" % network.id(host))
                 elif type == Message.Tags.UPLOAD_FILE:
@@ -134,8 +138,20 @@ def store_replica(msg):
     total = msg[3]
     data = msg[4]
 
-    print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader)
-    dfs_manager.write_replica(name, uploader, part, total, data)
+    print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader))
+    
+    manager.write_replica(filename, uploader, part, total, data)
+
+def write_slice(msg):
+    msglist = msg.split(Message.DELIMITER)
+    filename = msg[0]
+    part = msg[1]
+    total = msg[2]
+    data = msg[3]
+
+    print("Receiving %d/%d of file %s" % (part, total, filename))
+
+    filewriter.write_slice(filename, part, total)
 
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)
@@ -288,7 +304,7 @@ if __name__ == "__main__":
     profile = Entity(my_host, my_port, my_id)
     network = Network(profile, local_test)
 
-    manager = DFSM.DFSManager(network, my_id, "modules/dfs/dfs.json")
+    manager = DFSM.DFSManager(network, my_id, filewriter, "modules/dfs/dfs.json")
     dfs = manager.get_DFS_ref()
 
     log = Log()

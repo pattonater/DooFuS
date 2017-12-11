@@ -18,6 +18,12 @@ class Filewriter:
     def get_parts(self, filename):
         return self._files[filename].get_parts()
 
+    def write_slice(self, filename, part, data):
+        pass
+
     def remove(self, filename):
         self._files[filename].remove()
         del self._files[filename]
+
+    def read_slice(filename, part):
+        return self.files[filename].read_slice(part)
