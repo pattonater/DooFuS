@@ -13,7 +13,7 @@ class Message:
         POKE           = "P"
 
         REMOVE_FILE    = "R"
-        UPLOAD_FILE    = "U"    #
+        UPLOAD_FILE    = "U"    
 
         STORE_REPLICA  = "Z"    #Z3~name~uploader~part~total~data
         HAVE_REPLICA   = "W"    #W3~name~uploader~part~total
@@ -21,10 +21,6 @@ class Message:
         REQUEST_FILE   = "S"    #S3~name
         FILE_SLICE     = "F"    #F3~name~part~data
 
-        
-    #def valid_tag(self, message):
-
-    # this doesnt work
     @classmethod
     def data_to_str(cls, tag, data):
         MAX_SIZE = cls.LENGTH_SIZE
