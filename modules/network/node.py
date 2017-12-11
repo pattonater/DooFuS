@@ -20,12 +20,16 @@ class Node:
         self._port = port
         self._conn = socket
 
+        self._id = None
         self._last_heartbeat = time.time()
 
         self._lock = Lock()
 
     def host(self):
         return self._host
+
+#    def id(self):
+ #       return self._id
 
     # Not currently useful
     def record_heartbeat(self):
@@ -47,6 +51,14 @@ class Node:
         finally:
             self._lock.release()
 
+#    def set_id(self, id):
+ #       if self._id:
+  #          #print("Hey ids can't change......")
+   #         pass
+    #    self._id = id
+    def send_poke(self):
+        return self._send_message(MessageTags.POKE, ["poke"])
+    
     # Sends single byte message as heartbeat to host. Primarily used to test
     # the connection; if it doesn't go through, we assume the host is down.
     def send_heartbeat(self):
@@ -89,13 +101,13 @@ class Node:
         # read file in binary mode
         file = open("files/" + file_name, "rb")
 
-        print("Sending file " + file_name +  " to " + self._host) 
+        print("Sending " + file_name +  " to " + self._host + "...") 
         self._send_message(MessageTags.FILE, [file_name])
 
         while True:
             #TODO change chunk size and make constant
             chunk = file.read(8)
-            print ("Sending chunk: " + bytes.decode(chunk))
+            #print ("Sending chunk: " + bytes.decode(chunk))
             if not chunk:
                 break  # EOF
             
@@ -103,5 +115,5 @@ class Node:
 
         self._send_message(MessageTags.EOF, [file_name])
 
-        print("Finished sending " + file_name)
+        print("Finished sending %s to %s" % (file_name, self._host))
         file.close()

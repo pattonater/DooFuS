@@ -54,6 +54,9 @@ class DFS:
         # Reset disk write time track
         self._current_update = self._current_update if toFile else 0          
 
+    def clear_files(self):
+        self._log["files"] = []
+        self._update(True)
 
     # Adds file object to _log
     def add_file(self, filename, uploader):

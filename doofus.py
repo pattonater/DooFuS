@@ -15,6 +15,8 @@ from modules.dfs.dfs import DFS # DFS itself
 
 from modules.filewriter.filewriter import Filewriter # writes files
 
+from modules.logger.log import Log
+
 local_test = False
 
 LISTEN_PORT = 8889
@@ -29,26 +31,8 @@ dfs = None
 
 filewriter = None
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
-
-h = logging.FileHandler('logs/debug.log')
-h.setLevel(logging.NOTSET)
-h.setFormatter(formatter)
-
-h2 = logging.FileHandler('logs/info.log')
-h2.setLevel(logging.INFO)
-h2.setFormatter(formatter)
-
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.WARNING)
-ch.setFormatter(formatter)
-
-logger.addHandler(h)
-logger.addHandler(h2)
-logger.addHandler(ch)
+log = None
+logger = None
 
 def _get_ip():
     #Found from: https://stackoverflow.com/questions/2311510/getting-a-machines-external-ip-address-with-python/
@@ -122,7 +106,7 @@ def listen_for_messages(conn, host):
 
 
         verified = verified or network.verified(host)
-        well_formatted = type and msg # and MessageTags.valid_tag(type)
+        well_formatted = type and msg
         
         # handle the actual message
         if not verified:
@@ -134,6 +118,7 @@ def listen_for_messages(conn, host):
                     # kill connection if not verified within 2 seconds
                     time_to_die =  time.time() - start_time > 2
         else:
+            # TODO get rid of unnecessary nesting
             if not network.connected(host):
                 # this is where we will see when the connection should die mostly
                 time_to_die = True
@@ -153,22 +138,26 @@ def listen_for_messages(conn, host):
                 elif type == MessageTags.CHUNK:
                     handle_chunk(msg)
                 elif type == MessageTags.EOF:
-                    handle_EOF(msg)
+                    handle_EOF(msg, host)
+                elif type == MessageTags.POKE:
+                    print("%s poked you!" % network.id(host))
 
 def handle_file(filename, host):
-    print("Receiving file " + filename + " from " + host)
+    print("Receiving file " + filename + " from " + host + "...")
     # prepend to filename if testing locally
     filewriter.add_file(filename)
 
 def handle_chunk(msg):
+    #TODO should probably send num of total chunks and which this is for info verification
     msglist = msg.split(MessageTags.DELIMITER)
     filename = msglist[0]
     chunk = msglist[1]
     filewriter.add_chunk(filename, chunk)
 
-def handle_EOF(filename):
-    print("End of file " + filename)
+def handle_EOF(filename, host):
+    print("Finished receiving %s" % (filename))
     filewriter.write(filename)
+    dfs.add_file(filename, network.id(host))
 
 def handle_authorized_msg(msg):
     ids = msg.split(MessageTags.DELIMITER)
@@ -230,7 +219,7 @@ def user_interaction():
             dfs.delete_file(text[7:])
         elif text == "help":
             print_help()
-        elif text == "quit":
+        elif text == "quit" or text == "q":
             exit()
         elif text == "join":
             connect_to_network()
@@ -244,15 +233,17 @@ def user_interaction():
             print("I don't know how")
         elif text == "refresh":
             print("I don't know how")
+        elif text == "clear files":
+            dfs.clear_files()
         elif text == "debug":
-            toggle_debug()
-            network.toggle_debug()
+            log.toggle_debug()
         elif text == "info":
-            toggle_info()
-            network.toggle_info()
+            log.toggle_info()
+        elif text.startswith("poke"):
+            network.send_poke(text[5:])
+            
 
 def add_file(filename):
-
     for file in dfs.list_files():
         if file.get("filename") == filename:
             print("File already exists. Delete the current version or choose a new name.")
@@ -287,29 +278,13 @@ def truncate(text, length):
 def print_help():
     print("Commands:\n nodes - print node list\n files - print file list\n upload [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n join\n connect [host_name]\n myinfo - print ip addr and userid\n verify [user_id]\n refresh\n debug - toggle debugging mode\n info - toggle info mode\n quit")
 
-def toggle_debug():
-    if logger.handlers[2].level != logging.DEBUG:
-        ch.setLevel(logging.DEBUG)
-        logger.info("Starting debugging")
-    else:
-        logger.info("Stopping debugging")
-        ch.setLevel(logging.WARNING)
-
-
-def toggle_info():
-    if logger.handlers[2].level != logging.INFO:
-        ch.setLevel(logging.INFO)
-        logger.info("Starting to print INFO")
-    else:
-        logger.info("Stopping printing of INFO")
-        ch.setLevel(logging.WARNING)
     
 #########################################
 ## Startup
 #########################################
 if __name__ == "__main__":
 
-    dfs = DFS("test_dfs.json")
+    dfs = DFS("modules/dfs/dfs.json")
 
     filewriter = Filewriter()
 
@@ -326,6 +301,9 @@ if __name__ == "__main__":
     profile = Entity(my_host, my_port, my_id)
     network = Network(profile, local_test)
 
+    log = Log()
+    logger = log.get_logger()
+    
     # hello
     logger.info("Starting up")
 
@@ -344,7 +322,7 @@ if __name__ == "__main__":
     # should this be on a separate thread?
     # pros: user can interact with program right away
     # cons: possible race conditions?
-    threading.Thread(target=connect_to_network).start()
+#    threading.Thread(target=connect_to_network).start()
 
     # start up heatbeat thread
     threading.Thread(target=send_heartbeats).start()

@@ -4,7 +4,7 @@ class MessageTags:
     HEARTBEAT   = "H"
     HOST        = "T"
     VERIFY      = "V"
-    JOIN        = "J" #???
+#    JOIN        = "J" #???
     UPLOAD      = "U"
     REMOVE      = "R"
     AUTHORIZED  = "A"
@@ -12,6 +12,7 @@ class MessageTags:
     FILE        = "F"
     EOF         = "E"
     CHUNK       = "C"
+    POKE        = "P"
 
     DELIMITER   = "~"
 

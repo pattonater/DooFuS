@@ -16,5 +16,5 @@ class Filewriter:
         self._files[filename].add_chunk(chunk)
 
     def write(self, filename):
-        print("Writing " + filename)
+        #print("Writing " + filename)
         self._files[filename].write()
