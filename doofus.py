@@ -27,7 +27,7 @@ my_port = None
 my_id = None
 
 network = None
-
+manager = None
 dfs = None
 
 filewriter = None
@@ -99,7 +99,7 @@ def listen_for_messages(conn, host):
                 # don't handle any messages from unverified hosts except verify
                 if type == Message.Tags.IDENTITY:
                     time_to_die = not handle_verify_msg(msg, host)
-
+                    
                 if not time_to_die:
                     # kill connection if not verified within 2 seconds
                     time_to_die =  time.time() - start_time > 2
@@ -119,6 +119,10 @@ def listen_for_messages(conn, host):
                     handle_host_msg(msg, host)
                 elif type == Message.Tags.USER_INFO:
                     handle_users_msg(msg)
+                elif type == Message.Tags.DFS_INFO:
+                    handle_dfs_info_message(msg)
+                elif type == Message.Tags.STORE_REPLICA:
+                    handle_store_replica(msg, host)
     #            elif type == Message.Tags.FILE:
      #               handle_file(msg, host)
 #                elif type == Message.Tags.CHUNK:
@@ -130,26 +134,38 @@ def listen_for_messages(conn, host):
                 elif type == Message.Tags.UPLOAD_FILE:
                     handle_upload(msg, host)
 
-def handle_file(filename, host):
-    print("Receiving file " + filename + " from " + host + "...")
-    # prepend to filename if testing locally
-    filewriter.add_file(filename)
-
-def handle_chunk(msg):
-    #TODO should probably send num of total chunks and which this is for info verification
+def store_replica(msg):
     msglist = msg.split(Message.DELIMITER)
-    filename = msglist[0]
-    chunk = msglist[1]
-    filewriter.add_chunk(filename, chunk)
+    filename = msg[0]
+    uploader = msg[1]
+    part = msg[2]
+    total = msg[3]
+    data = msg[4]
 
-def handle_EOF(filename, host):
-    print("Finished receiving %s" % (filename))
-    filewriter.write(filename)
-#    dfs.add_file(filename, network.id(host))
+    print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader))
+    manager.write_replica(name, uploader, part, total, data)
+
+def handle_store_replica(msg, host):
+    msglist = msg.split(Message.DELIMITER)
+    file_name = msg[0]
+    uploader = msg[1]
+    part_num = msg[2]
+    total_parts = msg[3]
+    file = msg[4]
+    logger.info("Receiving " + uploader + "'s file " + file_name + " from " + host + "...")
+    filewriter.write(file_name, part_num, total_parts, file)
+    logger.info("Broadcasting successful replica reception to network")
+    network.broadcast_replica(file_name, uploader, part_num, total_parts)
+    logger.info("Finished alerting other nodes in network")
+    
 
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)
     network.add_users(ids)
+
+def handle_dfs_info_message(dfs_json_str):
+    dfs_json = json.loads(dfs_json_str)
+    manager.update_with_dfs_json(dfs_json)
 
 def handle_verify_msg(id, host):
     logger.info("Received id from %s" % (host))
@@ -164,8 +180,8 @@ def handle_verify_msg(id, host):
 
         # do other handshake stuff
         # send them your dfs info
-        files = dfs.list_files
-        network.send_dfs(files, host)
+        network.send_network_info(host)
+        network.send_dfs_info(host, manager.get_log())
 
         # send them network config info (trusted ids)
         network.send_network_info(host)
@@ -207,10 +223,14 @@ def user_interaction():
         if text == "nodes":
             print_node_list()
         elif text.startswith("upload"):
-            add_file(text[7:])
+            file = text[7:]
+            add_file(file)
+        elif text.startswith("download"):
+            file = text[9:]
+            # tell dfs manager to download
         elif text == "files":
             print_file_list()
-        elif text[:6] == "delete":
+        elif text.startswith("delete"):
             dfs.delete_file(text[7:])
         elif text == "help":
             print_help()
@@ -225,7 +245,8 @@ def user_interaction():
         elif text == "myinfo":
             print("%s as %s" % (my_host, my_id))
         elif text.startswith("verify"):
-            network.add_users([text[7:]])
+            user = text[7:]
+            network.add_users([user])
         elif text == "refresh":
             print("I don't know how")
         elif text == "clear files":
@@ -235,7 +256,8 @@ def user_interaction():
         elif text == "info":
             log.toggle_info()
         elif text.startswith("poke"):
-            network.send_poke(text[5:])
+            user = text[5:]
+            network.send_poke(user)
         elif text == "users":
             print(network.users())
             

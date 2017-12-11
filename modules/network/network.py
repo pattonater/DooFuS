@@ -147,15 +147,26 @@ class Network:
         node = self._nodes[host]
         node.send_verified_ids(list(self._users.keys()))
 
-    def send_replica(self, host, filename, my_id):
-        pass
-    
-    def send_dfs(self, files, host):
+    # Used by filemanager to store replicas on other hosts in network
+    def send_replica(self, host, filename, id, part_num, total_parts):
+        if not self.connected(host):
+            print("Tried to send replica to disconnected host")
+            return
+        self._nodes[host].add_file(file_name, id, part_num, total_parts)
+
+    # Called by doofus to broadcast possession of replica to network
+    def broadcast_replica(file_name, uploader, part_num, total_parts):
+        for host in list(self._connected):
+            self._nodes[host].replica_alert(file_name, uploader, part_num, total_parts)
+        
+    def send_dfs_info(self, host, dfs):
         if not host in self._nodes:
             return
 
-        node = self._nodes[host]        
-
+        node = self._nodes[host]
+        print(dfs)
+        dfs_json_str = json.dumps(dfs)
+        node.send_dfs_info(dfs_json_str)
 
 ######################################
 ## Network Internal Interface
@@ -239,7 +250,7 @@ class Network:
 
     def id(self, host):
         if host not in self._users:
-            return "HUGONO"
+            return False
         return self._users[host]
 
     def get_seen_nodes(self):

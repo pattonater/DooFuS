@@ -28,7 +28,14 @@ class DFSManager:
     def get_log(self):
         return self._fs.return_log()
 
-
+    def update_with_dfs_json(self, dfs):
+        files = dfs["files"]
+        for file in files:
+            name = file["filename"]
+            uploader = file["uploader"]
+            if not self._fs.check_file(name, uploader):
+                self._fs.add_file(name, uploader)
+            
     def acknowledge_replica(self, filename, uploader, replica_host):
         if self._fs.check_file(filename, uploader):
             self._fs.add_replica(filename, uploader, replica_host)
@@ -59,7 +66,7 @@ class DFSManager:
             self._network.send_replica(host, filename, self._id, 1, 1)
 
             i += 1
-
+        
 
     def store_replica(self, filename, uploader, part, total, data):
         ## add replica to dfs
