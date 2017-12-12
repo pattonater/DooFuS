@@ -98,7 +98,6 @@ def listen_for_messages(conn, host):
         
         # handle the actual message
         if not verified:
-            #print("NOT VERIFIED")
                 # don't handle any messages from unverified hosts except verify
             if type == Message.Tags.IDENTITY:
                 time_to_die = not handle_verify_msg(msg, host)
@@ -125,12 +124,11 @@ def listen_for_messages(conn, host):
                 elif type == Message.Tags.DFS_INFO:
                     handle_dfs_info_message(msg)
                 elif type == Message.Tags.STORE_REPLICA:
-                    print("STORING REPLICA")
                     handle_store_replica(msg, host)
                 elif type == Message.Tags.REQUEST_FILE:
                     handle_request_file(msg, host)
                 elif type == Message.Tags.FILE_SLICE:
-                    write_slice(msg)
+                    handle_file_slice(msg)
                 elif type == Message.Tags.HAVE_REPLICA:
                     handle_have_replica(msg, host)
                 elif type == Message.Tags.POKE:
@@ -144,7 +142,11 @@ def handle_request_file(msg, host):
     part_num = msg[1]
     total_parts = msg[2]
     logger.info("Request for part %s/%s of %s from %s" % (part_num, total_parts, file_name, host))
-    file = filewriter.read_slice(file_name, part_num)
+    
+    # read file data from replica
+    file = filewriter.read_from_replica(file_name, part_num)
+    
+    # send to requester
     network.serve_file_request(file_name, part_num, total_parts, host, file)
 
 def handle_store_replica(msg, host):
@@ -155,7 +157,11 @@ def handle_store_replica(msg, host):
     total_parts = msg[3]
     data = msg[4]
     logger.info("Receiving " + uploader + "'s file " + file_name + " from " + host + "...")
+
+    # add file data to replica file
     manager.store_replica(file_name, uploader, part_num, total_parts, data)
+    
+    # tell other nodes to update their dfs
     logger.info("Broadcasting successful replica reception to network")
     network.broadcast_replica(file_name, uploader, part_num, total_parts)
     logger.info("Finished alerting other nodes in network")
@@ -165,18 +171,20 @@ def handle_have_replica(msg, host):
     file_name = msg[0]
     replica_node = network.id(host)
     
+    # update my dfs with new replica info
     manager._fs.add_replicas(file_name, [replica_node])
     
-def write_slice(msg):
+def handle_file_slice(msg):
     msg = msg.split(Message.DELIMITER)
     filename = msg[0]
     part = msg[1]
     total = msg[2]
     data = msg[3]
 
-    print("Receiving %d/%d of file %s" % (part, total, filename))
+    logger.info("Receiving %d/%d of file %s" % (part, total, filename))
 
-    filewriter.write_slice(filename, part, total)
+    # write file data to files/filename
+    filewriter.write_to_file(filename, part, total)
 
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)

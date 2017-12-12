@@ -85,7 +85,7 @@ class DFSManager:
         ## add replica to dfs
         self.acknowledge_replica(filename, uploader, self._id)
         ## write data to filename
-        self._filewriter.write(filename, part, total, data)
+        self._filewriter.write_to_replica(filename, part, total, data)
 
     def dump_replica(self, filename):
         ## remove from disk
@@ -104,7 +104,7 @@ class DFSManager:
         file_replicas = file["replicas"]
 
         if self._id in file_replicas:
-            self._filewriter.write_slice(filename)
+            self._filewriter.write_to_file(filename)
             '''try:
                 from shutil import copy2
                 copy2("replicas/" + filename, "files/" + filename)

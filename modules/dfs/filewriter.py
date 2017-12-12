@@ -1,29 +1,32 @@
 from .file import File
+from os import listdir
 
 # stores a dict of files and writes to them
 class Filewriter:
 
     def __init__(self):
         self._files = {}
+        # adding directories to replicas will break this
+        replicas = listdir("replicas/")
+        # add all existing files
+        for filename in replicas:
+            self._files[filename] = File(filename)
 
-    def write(self, filename, part, total, data):
+    def write_to_replica(self, filename, part, total, data):
         if not filename in self._files:
             self._files[filename] = File(filename, total)
         
-        self._files[filename].write(part, data)
+        self._files[filename].write_to_replica(part, data)
 
-    def read(self, filename):
-        return self._files[filename].read()
+    def write_to_file(self, filename, part = 1, data = None):
+        self._files[filename].write_to_file(part, data)
 
-    def get_parts(self, filename):
-        return self._files[filename].get_parts()
-
-    def write_slice(self, filename, part = 1, data = None):
-        self._files[filename].write_slice(part, data)
+    def read_from_replica(self, filename, part):
+        return self._files[filename].read_from_replica(part)
 
     def remove(self, filename):
         self._files[filename].remove()
         del self._files[filename]
 
-    def read_slice(self, filename, part):
-        return self.files[filename].read_slice(part)
+    def get_parts(self, filename):
+        return self._files[filename].get_parts()
