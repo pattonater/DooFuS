@@ -37,6 +37,8 @@ class Network:
 
         self._names = {}
         self._users = {}
+        self._users[me.id] = me.host
+        self._names[me.host] = me.id
 
         self._lock = Lock()
 
