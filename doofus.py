@@ -98,7 +98,7 @@ def listen_for_messages(conn, host):
         
         # handle the actual message
         if not verified:
-            print("NOT VERIFIED")
+            #print("NOT VERIFIED")
                 # don't handle any messages from unverified hosts except verify
             if type == Message.Tags.IDENTITY:
                 time_to_die = not handle_verify_msg(msg, host)
@@ -143,7 +143,7 @@ def handle_request_file(msg, host):
     file_name = msg[0]
     part_num = msg[1]
     total_parts = msg[2]
-    logger.info("Request for part %d/%d of %s from $s" % (part_num, total_parts, file_name, host))
+    logger.info("Request for part %s/%s of %s from %s" % (part_num, total_parts, file_name, host))
     file = filewriter.read_slice(file_name, part_num)
     network.serve_file_request(file_name, part_num, total_parts, host, file)
 
