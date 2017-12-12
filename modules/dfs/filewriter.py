@@ -25,5 +25,5 @@ class Filewriter:
         self._files[filename].remove()
         del self._files[filename]
 
-    def read_slice(filename, part):
+    def read_slice(self, filename, part):
         return self.files[filename].read_slice(part)
