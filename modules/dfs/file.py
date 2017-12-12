@@ -18,14 +18,14 @@ class File:
             self._contents = {}
         
     def write(self, part, data):
-        lock.acquire()
+        self._lock.acquire()
 
         self._contents[part] = data
 
-        with open(self._replicaname) as file:
+        with open(self._replicaname, "w+") as file:
             json.dump(self._contents, file)
 
-        lock.release()
+        self._lock.release()
 
     def write_slice(self, part, data):
         self.write(part, data)

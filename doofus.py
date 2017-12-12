@@ -151,9 +151,9 @@ def handle_store_replica(msg, host):
     uploader = msg[1]
     part_num = msg[2]
     total_parts = msg[3]
-    file = msg[4]
+    data = msg[4]
     logger.info("Receiving " + uploader + "'s file " + file_name + " from " + host + "...")
-    manager.write_replica(filename, uploader, part, total, data)
+    manager.store_replica(file_name, uploader, part_num, total_parts, data)
     logger.info("Broadcasting successful replica reception to network")
     network.broadcast_replica(file_name, uploader, part_num, total_parts)
     logger.info("Finished alerting other nodes in network")
