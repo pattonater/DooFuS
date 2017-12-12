@@ -254,6 +254,12 @@ class Network:
 
         return alive
 
+    def user_connected(self, id):
+        if not id in self._users: return False
+
+        host = self._users[id]
+        return self.connected(host)
+
     def verified(self, host):
         return host in self._verified
 

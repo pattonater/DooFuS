@@ -239,7 +239,6 @@ def user_interaction():
         elif text.startswith("download"):
             file = text[9:]
             manager.download_file(file)
-            # tell dfs manager to download
         elif text == "files":
             print_file_list()
         elif text.startswith("delete"):
