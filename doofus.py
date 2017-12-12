@@ -206,8 +206,9 @@ def handle_upload(msg, host):
     msglist = msg.split(Message.DELIMITER)
     filename = msglist[0]
     uploader = msglist[1]
-    print("hello upload")
+
     dfs.add_file(filename, uploader)
+
         
 #########################################
 ## Thread for recieving new 1;5B1;5Bconnections
