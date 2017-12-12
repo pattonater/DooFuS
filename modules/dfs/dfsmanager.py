@@ -92,15 +92,22 @@ class DFSManager:
         self._fs.remove_file(filename)
 
     ## Throws DFSManagerDownloadError exception. Please catch it.
-    def download_file(self, filename, dst):
+    def download_file(self, filename, dst = ""):
         ## Check if you are a replica
-        file_replicas = self._fs.list_files()
+        file = self._fs.get_file(filename)
+        if not file:
+            print("Invalid name")
+            return
+
+        file_replicas = file["replicas"]
+
         if self._id in file_replicas:
             try:
                 from shutil import copy2
                 copy2("replicas/" + filename, "files/" + filename)
                 return
             except IOError:
+                print("Cannot retrieve")
                 ## Something bad happened. Let's try to get it from somebody else.
                 pass
 
@@ -109,9 +116,11 @@ class DFSManager:
         active_replicas = list(filter(lambda host: host in file_replicas, active_hosts))
 
         if len(active_replicas) == 0:
-            raise DFSManagerDownloadError(filename, "No active replicas of file")
+            print("No active replicas of file")
+            return
+            #raise DFSManagerDownloadError(filename, "No active replicas of file")
 
-        self._network.request_file(active_replicas[0], filename, 1, 1)
+        self._network.request_file(active_replicas[0], filename, "1", "1")
 
 
     def delete_file(self, filename):

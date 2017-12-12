@@ -147,7 +147,6 @@ def handle_request_file(msg, host):
 
 def handle_store_replica(msg, host):
     msg = msg.split(Message.DELIMITER)
-    
     file_name = msg[0]
     uploader = msg[1]
     part_num = msg[2]
@@ -239,6 +238,7 @@ def user_interaction():
             add_file(file)
         elif text.startswith("download"):
             file = text[9:]
+            manager.download_file(file)
             # tell dfs manager to download
         elif text == "files":
             print_file_list()
