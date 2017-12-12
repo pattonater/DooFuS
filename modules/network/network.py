@@ -274,9 +274,9 @@ class Network:
         return list(self._users.keys())
 
     def id(self, host):
-        if host not in self._users:
+        if host not in self._names:
             return False
-        return self._users[host]
+        return self._names[host]
 
     def get_seen_nodes(self):
         return list(self._seen)
@@ -285,9 +285,9 @@ class Network:
         return list(self._connected)
 
     def host(self, id):
-        if id not in self._names:
+        if id not in self._users:
             return False
-        return self._names[host]
+        return self._users[host]
 
 
 ######################################
