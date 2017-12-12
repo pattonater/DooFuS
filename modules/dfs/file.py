@@ -29,7 +29,7 @@ class File:
         self._contents[part] = data
 
         with open(self._replicaname, "w+") as file:
-            jsonfile = [total, self._contents]
+            jsonfile = [self._total_parts, self._contents]
             json.dump(jsonfile, file)
 
         self._lock.release()
