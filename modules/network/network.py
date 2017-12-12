@@ -153,7 +153,8 @@ class Network:
         if not self.connected(host):
             print("Tried to send replica to disconnected host")
             return
-        self._nodes[host].add_file(file_name, id, part_num, total_parts)
+        print("In send_replica: sending file %s to host %s" % (filename, host))
+        self._nodes[host].send_replica(filename, id, part_num, total_parts)
 
     # Called by doofus to broadcast possession of replica to network
     def broadcast_replica(self, file_name, uploader, part_num, total_parts):

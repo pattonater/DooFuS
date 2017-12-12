@@ -91,7 +91,8 @@ class Node:
         try:
             msg = Message.data_to_str(tag, data)
             self._conn.send(str.encode(msg))
-        except:
+        except Exception as err:
+            print(err)
             self._lock.release()
             return False
 
@@ -99,15 +100,17 @@ class Node:
         return True
 
 
-    def send_file(self, file_name, id, part_num, total_parts):
+    def send_replica(self, file_name, id, part_num, total_parts):
         # read file in binary mode
-        file = open("files/" + file_name, "rb")
+        file = open("files/" + file_name, "r")
         
-        print("Sending " + file_name +  " to " + self._host + "...") 
-        self._send_message(Message.Tags.STORE_REPLICA, [file_name, id, 1, 1, file])
+        replica = file.read()
+        
+        print("Sending " + file_name +  " to " + self._host + "...")
+        self._send_message(Message.Tags.STORE_REPLICA, [file_name, id, "1", "1", replica])
 
 #        while True:
-            #TODO change chunk size and make constant
+            #TODO change chunk size and make constantx
  #           chunk = file.read(8)
             #print ("Sending chunk: " + bytes.decode(chunk))
   #          if not chunk:

@@ -19,7 +19,7 @@ class DFSManager:
 
     # Based on our failure model, calculates number of replicas needed
     # given the priority and number of nodes
-    def _compute_replica_count(priority, node_count):
+    def _compute_replica_count(self, priority, node_count):
         return node_count
 
     def get_DFS_ref(self):
@@ -42,10 +42,15 @@ class DFSManager:
         else:
             self._fs.add_file(filename, uploader, [replica_host])
 
-
     def upload_file(self, filename, priority = 0.5):
         if self._fs.check_file(filename, self._id):
             raise dfs.DFSAddFileError(filename, self._id)
+
+        # send dfs with updated file list to everyone
+        print("hello?")
+        for host in self._network.get_connected_nodes():
+            print("about to tell host %s the new dfs" % (host))
+            self._network.add_file(host, filename, self._id) # Send metadata telling hosts about new file   
 
         ## choose replicas (all)
         total_nodes = len(self._network._connected)
@@ -54,7 +59,7 @@ class DFSManager:
             print("No nodes on network")
             raise DFSManagerAddFileError(filename)
 
-        num_replicas = _compute_replica_count(priority, total_nodes)
+        num_replicas = self._compute_replica_count(priority, total_nodes)
 
         ## call network send file function
         i = 0
@@ -62,7 +67,7 @@ class DFSManager:
         for host in self._network._connected:
             if i == num_replicas:
                 break
-
+            print("Called send replica on network: filename=%s, id=%s" % (filename, self._id))
             self._network.send_replica(host, filename, self._id, 1, 1)
 
             i += 1

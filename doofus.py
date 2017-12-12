@@ -98,13 +98,14 @@ def listen_for_messages(conn, host):
         
         # handle the actual message
         if not verified:
+            print("NOT VERIFIED")
                 # don't handle any messages from unverified hosts except verify
-                if type == Message.Tags.IDENTITY:
-                    time_to_die = not handle_verify_msg(msg, host)
-
-                if not time_to_die:
-                    # kill connection if not verified within 2 seconds
-                    time_to_die =  time.time() - start_time > 2
+            if type == Message.Tags.IDENTITY:
+                time_to_die = not handle_verify_msg(msg, host)
+                
+            if not time_to_die:
+                # kill connection if not verified within 2 seconds
+                time_to_die =  time.time() - start_time > 2
         else:
             # TODO get rid of unnecessary nesting
             if not network.connected(host):
@@ -124,6 +125,7 @@ def listen_for_messages(conn, host):
                 elif type == Message.Tags.DFS_INFO:
                     handle_dfs_info_message(msg)
                 elif type == Message.Tags.STORE_REPLICA:
+                    print("STORING REPLICA")
                     handle_store_replica(msg, host)
                 elif type == Message.Tags.REQUEST_FILE:
                     handle_request_file(msg, host)
@@ -269,24 +271,9 @@ def user_interaction():
         elif text == "users":
             print(network.users())
 
-
-            
-
 def add_file(filename):
-    for file in dfs.list_files():
-        if file.get("filename") == filename:
-            print("File already exists. Delete the current version or choose a new name.")
-            return
-    # send to everyone
-    print("hello?")
-    for host in network.get_connected_nodes():
-        print("about to tell host %s to add file" % (host))
-        network.add_file(host, filename, my_id) # Send metadata telling hosts about new file
-#        network.send_file(host, filename)
-
-    # add to dfs TODO add replicas
-    dfs.add_file(filename, my_id)
-
+    # add to dfs and add replicas
+    manager.upload_file(filename)
 
 def print_node_list():
     seen_nodes = network.get_seen_nodes()
