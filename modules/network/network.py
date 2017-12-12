@@ -191,6 +191,13 @@ class Network:
         print(self._verified)
         print(self._users)
 
+    def display_users(self):
+        for user in self._users.keys():
+            host = self._users[user]
+            online = "Online" if host else "Offline"
+            print("%s     %s" % (user, online))
+            
+
     def startup(self):
         try:
             for host in self._seen:

@@ -271,7 +271,8 @@ def user_interaction():
             user = text[5:]
             network.send_poke(user)
         elif text == "users":
-            print(network.users())
+            network.display_users()
+            #print(network.users())
 
 def add_file(filename):
     # add to dfs and add replicas
