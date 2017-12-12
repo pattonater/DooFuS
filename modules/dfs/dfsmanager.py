@@ -89,7 +89,7 @@ class DFSManager:
         self._fs.remove_file(filename)
 
     ## Throws DFSManagerDownloadError exception. Please catch it.
-    def download_file(self, filename, dst):
+    def download_file(self, filename, dst = ""):
         ## Check if you are a replica
         file_replicas = self._fs.list_files()
         if self._id in file_replicas:
