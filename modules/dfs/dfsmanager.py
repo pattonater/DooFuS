@@ -47,7 +47,9 @@ class DFSManager:
 
     def upload_file(self, filename, priority = 0.5):
         if self._fs.check_file(filename, self._id):
-            raise dfs.DFSAddFileError(filename, self._id)
+            print("This file is already on the dfs")
+            return False
+            #raise dfs.DFSAddFileError(filename, self._id)
 
         # send dfs with updated file list to everyone
         print("hello?")
@@ -60,7 +62,8 @@ class DFSManager:
 
         if not total_nodes:
             print("No nodes on network")
-            raise DFSManagerAddFileError(filename)
+            return False
+        #raise DFSManagerAddFileError(filename)
 
         num_replicas = self._compute_replica_count(priority, total_nodes)
 
@@ -91,13 +94,20 @@ class DFSManager:
     ## Throws DFSManagerDownloadError exception. Please catch it.
     def download_file(self, filename, dst = ""):
         ## Check if you are a replica
-        file_replicas = self._fs.list_files()
+        file = self._fs.get_file(filename)
+        if not file:
+            print("Invalid name")
+            return
+
+        file_replicas = file["replicas"]
+
         if self._id in file_replicas:
             try:
                 from shutil import copy2
                 copy2("replicas/" + filename, "files/" + filename)
                 return
             except IOError:
+                print("Cannot retrieve")
                 ## Something bad happened. Let's try to get it from somebody else.
                 pass
 
@@ -106,9 +116,11 @@ class DFSManager:
         active_replicas = list(filter(lambda host: host in file_replicas, active_hosts))
 
         if len(active_replicas) == 0:
-            raise DFSManagerDownloadError(filename, "No active replicas of file")
+            print("No active replicas of file")
+            return
+            #raise DFSManagerDownloadError(filename, "No active replicas of file")
 
-        self._network.request_file(active_replicas[0], filename, 1, 1)
+        self._network.request_file(active_replicas[0], filename, "1", "1")
 
 
     def delete_file(self, filename):
@@ -159,7 +171,7 @@ class DFSManager:
         replicas = file.get("replicas")
 
         for r in replicas:
-            if self._network.connected(r):
+            if self._network.user_connected(r):
                 return True
             
         return False
@@ -188,19 +200,19 @@ class DFSManagerError(Exception):
 
 class DFSManagerIOError(DFSManagerError):
     def __init__(self, msg):
-        DFSError.__init__(self, "DFSManager i/o error: \n" + msg)
+        DFSManagerError.__init__(self, "DFSManager i/o error: \n" + msg)
 
 class DFSManagerDownloadError(DFSManagerError):
     def __init__(self, filename, additional = ""):
-        DFSError.__init__(self, "DFSManager download file error: " + additional + "\nfilename: " + filename)
+        DFSManagerError.__init__(self, "DFSManager download file error: " + additional + "\nfilename: " + filename)
 
 class DFSManagerAddFileError(DFSManagerError):
     def __init__(self, filename):
-        DFSError.__init__(self, "DFSManager add file error: Could not upload file to replicas\n"
+        DFSManagerError.__init__(self, "DFSManager add file error: Could not upload file to replicas\n"
             + "filename: " + filename)
 
 class DFSManagerRemoveFileError(DFSManagerError):
     def __init__(self, filename):
-        DFSError.__init__(self, "DFS remove file error: Could not add file\n"
+        DFSManagerError.__init__(self, "DFS remove file error: Could not add file\n"
             + "filename: " + filename) 
 

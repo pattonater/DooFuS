@@ -146,8 +146,7 @@ def handle_request_file(msg, host):
     network.serve_file_request(file_name, part_num, total_parts, host, file)
 
 def handle_store_replica(msg, host):
-    print("msg")
-    msg = msg.split(Message.DELIMITER)    
+    msg = msg.split(Message.DELIMITER)
     file_name = msg[0]
     uploader = msg[1]
     part_num = msg[2]
@@ -207,8 +206,9 @@ def handle_upload(msg, host):
     msglist = msg.split(Message.DELIMITER)
     filename = msglist[0]
     uploader = msglist[1]
-    print("hello upload")
+
     dfs.add_file(filename, uploader)
+
         
 #########################################
 ## Thread for recieving new 1;5B1;5Bconnections
