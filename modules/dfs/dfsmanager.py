@@ -112,8 +112,13 @@ class DFSManager:
                 pass
 
         ## Find active replicas
-        active_hosts  = self._network._connected
-        active_replicas = list(filter(lambda host: host in file_replicas, active_hosts))
+        ##active_hosts  = self._network._connected
+        ##active_replicas = list(filter(lambda host: host in file_replicas, active_hosts))
+        active_replicas = []
+        for user in file_replicas:
+            if self._network.user_connected(user):
+                active_replicas += [self._network.host(user)]
+
 
         if len(active_replicas) == 0:
             print("No active replicas of file")
