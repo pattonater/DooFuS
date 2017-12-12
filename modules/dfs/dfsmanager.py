@@ -162,7 +162,7 @@ class DFSManager:
         replicas = file.get("replicas")
 
         for r in replicas:
-            if self._network.connected(r):
+            if self._network.user_connected(r):
                 return True
             
         return False

@@ -137,7 +137,7 @@ def listen_for_messages(conn, host):
                     handle_upload(msg, host)
 
 def handle_request_file(msg, host):
-    msglist = msg.split(Message.DELIMITER)
+    msg = msg.split(Message.DELIMITER)
     file_name = msg[0]
     part_num = msg[1]
     total_parts = msg[2]
@@ -146,7 +146,8 @@ def handle_request_file(msg, host):
     network.serve_file_request(file_name, part_num, total_parts, host, file)
 
 def handle_store_replica(msg, host):
-    msglist = msg.split(Message.DELIMITER)
+    msg = msg.split(Message.DELIMITER)
+    
     file_name = msg[0]
     uploader = msg[1]
     part_num = msg[2]
@@ -159,7 +160,7 @@ def handle_store_replica(msg, host):
     logger.info("Finished alerting other nodes in network")
     
 def write_slice(msg):
-    msglist = msg.split(Message.DELIMITER)
+    msg = msg.split(Message.DELIMITER)
     filename = msg[0]
     part = msg[1]
     total = msg[2]
