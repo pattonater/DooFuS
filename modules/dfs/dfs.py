@@ -65,21 +65,24 @@ class DFS:
                 return True
         return False
 
+
     # Adds replica for given file to _log
-    def add_replica(self, filename, uploader, replica):
+    def add_replicas(self, filename, replicas):
         self._lock.acquire()
         file = None
         for f in self._log["files"]:
-            if f["filename"] == filename and f["uploader"] == uploader:
+            if f["filename"] == filename: # and f["uploader"] == uploader:
                 file = f
                 break
 
-        for r in file["replicas"]:
-            if r == replica:
-                self._lock.release()
-                return
+        # hack fix to let this method take in a single object as well
+        # ie don't have to change existing code
+        if not isinstance(replicas, list):
+            replicas = [replicas]
 
-        file["replicas"].append(replica)
+        for repl in replicas:
+            if repl not in file["replicas"]:
+                file["replicas"].append(repl)
 
         self._update()
         
@@ -104,6 +107,13 @@ class DFS:
         self._update()
 
         self._lock.release()
+
+    def get_file(self, filename):
+        for f in self._log["files"]:
+            if filename == f["filename"]:
+                return f
+        return None
+        
         
     # Removes file object from _log
     def delete_file(self, filename):

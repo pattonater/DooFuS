@@ -33,12 +33,15 @@ class DFSManager:
         for file in files:
             name = file["filename"]
             uploader = file["uploader"]
+            replicas = file["replicas"]
             if not self._fs.check_file(name, uploader):
-                self._fs.add_file(name, uploader)
+                self._fs.add_file(name, uploader, replicas)
+            else:
+                self._fs.add_replicas(name, replicas)
             
     def acknowledge_replica(self, filename, uploader, replica_host):
         if self._fs.check_file(filename, uploader):
-            self._fs.add_replica(filename, uploader, replica_host)
+            self._fs.add_replicas(filename, replica_host)
         else:
             self._fs.add_file(filename, uploader, [replica_host])
 
