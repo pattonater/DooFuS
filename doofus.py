@@ -121,8 +121,12 @@ def listen_for_messages(conn, host):
                     handle_host_msg(msg, host)
                 elif type == Message.Tags.USER_INFO:
                     handle_users_msg(msg)
+                elif type == Message.Tags.DFS_INFO:
+                    handle_dfs_info_message(msg)
                 elif type == Message.Tags.STORE_REPLICA:
-                    store_replica(msg)
+                    handle_store_replica(msg, host)
+                elif type == Message.Tags.REQUEST_FILE:
+                    handle_request_file(msg, host)
                 elif type == Message.Tags.FILE_SLICE:
                     write_slice(msg)
                 elif type == Message.Tags.POKE:
@@ -130,18 +134,28 @@ def listen_for_messages(conn, host):
                 elif type == Message.Tags.UPLOAD_FILE:
                     handle_upload(msg, host)
 
-def store_replica(msg):
+def handle_request_file(msg, host):
     msglist = msg.split(Message.DELIMITER)
-    filename = msg[0]
+    file_name = msg[0]
+    part_num = msg[1]
+    total_parts = msg[2]
+    logger.info("Request for part %d/%d of %s from $s" % (part_num, total_parts, file_name, host))
+    file = filewriter.read_slice(file_name, part_num)
+    network.serve_file_request(file_name, part_num, total_parts, host, file)
+
+def handle_store_replica(msg, host):
+    msglist = msg.split(Message.DELIMITER)
+    file_name = msg[0]
     uploader = msg[1]
-    part = msg[2]
-    total = msg[3]
-    data = msg[4]
-
-    print("Receiving %d/%d of file %s uploaded by %s..." % (part, total, filename, uploader))
-    
+    part_num = msg[2]
+    total_parts = msg[3]
+    file = msg[4]
+    logger.info("Receiving " + uploader + "'s file " + file_name + " from " + host + "...")
     manager.write_replica(filename, uploader, part, total, data)
-
+    logger.info("Broadcasting successful replica reception to network")
+    network.broadcast_replica(file_name, uploader, part_num, total_parts)
+    logger.info("Finished alerting other nodes in network")
+    
 def write_slice(msg):
     msglist = msg.split(Message.DELIMITER)
     filename = msg[0]
@@ -157,6 +171,10 @@ def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)
     network.add_users(ids)
 
+def handle_dfs_info_message(dfs_json_str):
+    dfs_json = json.loads(dfs_json_str)
+    manager.update_with_dfs_json(dfs_json)
+
 def handle_verify_msg(id, host):
     logger.info("Received id from %s" % (host))
 
@@ -170,8 +188,8 @@ def handle_verify_msg(id, host):
 
         # do other handshake stuff
         # send them your dfs info
-        files = dfs.list_files
-        network.send_dfs(files, host)
+        network.send_network_info(host)
+        network.send_dfs_info(host, manager.get_log())
 
         # send them network config info (trusted ids)
         network.send_network_info(host)
@@ -213,10 +231,14 @@ def user_interaction():
         if text == "nodes":
             print_node_list()
         elif text.startswith("upload"):
-            add_file(text[7:])
+            file = text[7:]
+            add_file(file)
+        elif text.startswith("download"):
+            file = text[9:]
+            # tell dfs manager to download
         elif text == "files":
             print_file_list()
-        elif text[:6] == "delete":
+        elif text.startswith("delete"):
             dfs.delete_file(text[7:])
         elif text == "help":
             print_help()
@@ -231,7 +253,8 @@ def user_interaction():
         elif text == "myinfo":
             print("%s as %s" % (my_host, my_id))
         elif text.startswith("verify"):
-            network.add_users([text[7:]])
+            user = text[7:]
+            network.add_users([user])
         elif text == "refresh":
             print("I don't know how")
         elif text == "clear files":
@@ -241,9 +264,12 @@ def user_interaction():
         elif text == "info":
             log.toggle_info()
         elif text.startswith("poke"):
-            network.send_poke(text[5:])
+            user = text[5:]
+            network.send_poke(user)
         elif text == "users":
             print(network.users())
+
+
             
 
 def add_file(filename):
