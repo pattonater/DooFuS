@@ -287,7 +287,7 @@ class Network:
     def host(self, id):
         if id not in self._users:
             return False
-        return self._users[host]
+        return self._users[id]
 
 
 ######################################
