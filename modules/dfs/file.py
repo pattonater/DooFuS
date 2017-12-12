@@ -43,7 +43,7 @@ class File:
                 for i in range (0, num_parts):
                     file.write(self._contents[i])
 
-    def read_from_replica(part):
+    def read_from_replica(self, part):
         return self._contents[part]
 
     def remove(self):
