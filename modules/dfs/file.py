@@ -28,7 +28,8 @@ class File:
         self._lock.release()
 
     def write_slice(self, part, data):
-        self.write(part, data)
+        if data:
+            self.write(part, data)
         
         if (len(self._contents) == num_parts):
             self.write_to_files()
