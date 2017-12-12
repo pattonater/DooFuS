@@ -284,6 +284,11 @@ class Network:
     def get_connected_nodes(self):
         return list(self._connected)
 
+    def host(self, id):
+        if id not in self._names:
+            return False
+        return self._names[host]
+
 
 ######################################
 ## Helper Functions
