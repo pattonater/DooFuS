@@ -131,6 +131,8 @@ def listen_for_messages(conn, host):
                     handle_request_file(msg, host)
                 elif type == Message.Tags.FILE_SLICE:
                     write_slice(msg)
+                elif type == Message.Tags.HAVE_REPLICA:
+                    handle_have_replica(msg, host)
                 elif type == Message.Tags.POKE:
                     print("%s poked you!" % network.id(host))
                 elif type == Message.Tags.UPLOAD_FILE:
@@ -157,6 +159,13 @@ def handle_store_replica(msg, host):
     logger.info("Broadcasting successful replica reception to network")
     network.broadcast_replica(file_name, uploader, part_num, total_parts)
     logger.info("Finished alerting other nodes in network")
+
+def handle_have_replica(msg, host):
+    msg = msg.split(Message.DELIMITER)
+    file_name = msg[0]
+    replica_node = network.id(host)
+    
+    manager._fs.add_replicas(file_name, [replica_node])
     
 def write_slice(msg):
     msg = msg.split(Message.DELIMITER)
@@ -270,7 +279,8 @@ def user_interaction():
             user = text[5:]
             network.send_poke(user)
         elif text == "users":
-            print(network.users())
+            network.display_users()
+            #print(network.users())
 
 def add_file(filename):
     # add to dfs and add replicas
