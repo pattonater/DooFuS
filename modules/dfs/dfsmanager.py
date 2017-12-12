@@ -104,7 +104,8 @@ class DFSManager:
         file_replicas = file["replicas"]
 
         if self._id in file_replicas:
-            try:
+            self._filewriter
+'''            try:
                 from shutil import copy2
                 copy2("replicas/" + filename, "files/" + filename)
                 return
@@ -112,7 +113,7 @@ class DFSManager:
                 print("Cannot retrieve")
                 ## Something bad happened. Let's try to get it from somebody else.
                 pass
-
+'''
         ## Find active replicas
         ##active_hosts  = self._network._connected
         ##active_replicas = list(filter(lambda host: host in file_replicas, active_hosts))
