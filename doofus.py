@@ -282,11 +282,9 @@ def print_node_list():
         print(host.ljust(25) + ("connected" if network.connected(host) else "not connected"))
 
 def print_file_list():
-    for file in dfs.list_files():
-        filename = truncate(file.get("filename"), 22)
-        uploader = truncate(file.get("uploader"), 22)
-        print(filename.ljust(25) + "Uploaded by " + uploader.ljust(25) + "Replicated on " + (', '.join(str(replica) for replica in file.get("replicas"))))
+    manager.display_files()
 
+    
 # cuts off the end of the text for better formatting
 def truncate(text, length):
     if len(text) > length:

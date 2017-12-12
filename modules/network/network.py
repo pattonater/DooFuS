@@ -202,7 +202,7 @@ class Network:
     def verify_host(self, host, id):
         verified = id in self._users and self._users[id] == None
 
-        if self._users[id]:
+        if id in self._users and self._users[id]:
             self._logger.info("someone is already signed in as %s" % (id))
 
         if verified:

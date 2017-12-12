@@ -33,12 +33,15 @@ class DFSManager:
         for file in files:
             name = file["filename"]
             uploader = file["uploader"]
+            replicas = file["replicas"]
             if not self._fs.check_file(name, uploader):
-                self._fs.add_file(name, uploader)
+                self._fs.add_file(name, uploader, replicas)
+            else:
+                self._fs.add_replicas(name, replicas)
             
     def acknowledge_replica(self, filename, uploader, replica_host):
         if self._fs.check_file(filename, uploader):
-            self._fs.add_replica(filename, uploader, replica_host)
+            self._fs.add_replicas(filename, replica_host)
         else:
             self._fs.add_file(filename, uploader, [replica_host])
 
@@ -125,6 +128,55 @@ class DFSManager:
     def node_online(self, node):
         ## punt
         pass
+    
+    def display_files(self):
+        online = []
+        offline = []
+        for file in self._fs.list_files():
+            if self._file_online(file):
+                online.append(file)
+            else:
+                offline.append(file)
+                
+        print("*Online*")
+        for file in online:
+            self._display_file(file)
+            
+        print("")
+        print("*Offline*")
+        for file in offline:
+            self._display_file(file)
+
+    def _display_file(self, file):                
+        filename = truncate(file.get("filename"), 22).ljust(25)
+        uploader = truncate(file.get("uploader"), 22).ljust(25)
+        replicas = (', '.join(str(replica) for replica in file.get("replicas")))
+
+        print("%s Uploaded by %s Replicated on %s" % (filename, uploader, replicas))
+
+
+    def _file_online(self, file):
+        replicas = file.get("replicas")
+
+        for r in replicas:
+            if self._network.connected(r):
+                return True
+            
+        return False
+
+
+
+##########################
+## Utilities
+#########################
+
+# cuts off the end of the text for better formatting
+def truncate(text, length):
+    if len(text) > length:
+        return text[:(length-3)] + "..."
+    return text
+
+        
 
 ###########################
 ## DFSManager Exceptions
