@@ -74,9 +74,11 @@ class DFSManager:
             if i == num_replicas:
                 break
             print("Called send replica on network: filename=%s, id=%s" % (filename, self._id))
-            self._network.send_replica(host, filename, self._id, 1, 1)
+            self._network.send_replica(host, filename, self._id, "1", "1")
 
             i += 1
+
+        self._fs.add_file(filename, self._id)
         
 
     def store_replica(self, filename, uploader, part, total, data):
