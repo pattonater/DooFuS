@@ -181,10 +181,10 @@ def handle_file_slice(msg):
     total = msg[2]
     data = msg[3]
 
-    logger.info("Receiving %d/%d of file %s" % (part, total, filename))
-
+    logger.info("Receiving %s/%s of file %s" % (part, total, filename))
+   
     # write file data to files/filename
-    filewriter.write_to_file(filename, part, total)
+    filewriter.write_to_file(filename, part, total, data)
 
 def handle_users_msg(msg):
     ids = msg.split(Message.DELIMITER)

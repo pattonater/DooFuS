@@ -18,7 +18,10 @@ class Filewriter:
         
         self._files[filename].write_to_replica(part, data)
 
-    def write_to_file(self, filename, part = 1, data = None):
+    def write_to_file(self, filename, part = 1, total = 1, data = None):
+        if not filename in self._files:
+            self._files[filename] = File(filename, 1)
+
         self._files[filename].write_to_file(part, data)
 
     def read_from_replica(self, filename, part):
