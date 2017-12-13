@@ -170,7 +170,7 @@ class Network:
             return
         self._nodes[host].request_file(file_name, part_num, total_parts)
 
-    def serve_file_request(self, file_name, part_num, total_parts, host):
+    def serve_file_request(self, host, file_name, part_num, total_parts, file):
         self._nodes[host].serve_file_request(file_name, part_num, total_parts, file)
         
     def send_dfs_info(self, host, dfs):

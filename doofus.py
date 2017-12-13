@@ -144,10 +144,10 @@ def handle_request_file(msg, host):
     logger.info("Request for part %s/%s of %s from %s" % (part_num, total_parts, file_name, host))
     
     # read file data from replica
-    file = filewriter.read_from_replica(file_name, part_num)
+    data = filewriter.read_from_replica(file_name, part_num)
     
     # send to requester
-    network.serve_file_request(file_name, part_num, total_parts, host, file)
+    network.serve_file_request(host, file_name, part_num, total_parts, data)
 
 def handle_store_replica(msg, host):
     msg = msg.split(Message.DELIMITER)
