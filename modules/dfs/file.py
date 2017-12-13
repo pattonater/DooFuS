@@ -11,13 +11,13 @@ class File:
         self._filename = "files/" + filename
 
         # where you write replicas
-        self._replicaname = "replicas/" + filename + str(num_parts) + ".json"
+        self._replicaname = "replicas/" + filename + ".json"
 
         # if you already have the replica, load from file
         try:
             with open(self._replicaname) as file:
                 jsonfile = json.load(file)
-                self._total_parts = jsonfile[0]
+                self._total_parts = int(jsonfile[0])
                 self._contents = jsonfile[1]   
         except:
             self._total_parts = num_parts            
@@ -26,8 +26,9 @@ class File:
     def write_to_replica(self, part, data):
         self._lock.acquire()
 
-        self._contents[part] = data
-
+        # add part to contents and dump to json
+        self._contents[str(part)] = data
+        
         with open(self._replicaname, "w+") as file:
             jsonfile = [self._total_parts, self._contents]
             json.dump(jsonfile, file)
@@ -35,16 +36,26 @@ class File:
         self._lock.release()
 
     def write_to_file(self, part, data):
+        # if you don't have this part add it to replicas TODO don't do this
         if data:
-            self.write(part, data)
+            self.write_to_replica(part, data)
         
-        if (len(self._contents) == num_parts):
-            with open(self._filename, "ab+") as file:
-                for i in range (0, num_parts):
-                    file.write(self._contents[i])
+        print("%d/%d parts written" % (len(self._contents), self._total_parts))
+        
+        # if you have all parts write to disk
+        if (len(self._contents) == self._total_parts):
+            print("writing %s to disk" % (self._filename))
+            
+            # clear contents of file
+            open(self._filename, 'w+').close()
+            
+            # append each part to file
+            with open(self._filename, "a+") as file:
+                for i in range (1, self._total_parts + 1):
+                    file.write(self._contents[str(i)])
 
     def read_from_replica(self, part):
-        return self._contents[part]
+        return self._contents[str(part)]
 
     def remove(self):
         os.remove(self._replicaname)
