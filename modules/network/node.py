@@ -100,9 +100,9 @@ class Node:
         return True
 
 
-    def send_replica(self, file_name, id, part_num, total_parts):
+    def send_replica(self, file_name, file_path, id, part_num, total_parts):
         # read file in binary mode
-        file = open("files/" + file_name, "r")
+        file = open(file_path, "r")
         
         replica = file.read()
         

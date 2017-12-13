@@ -7,8 +7,10 @@ class File:
     def __init__(self, filename, num_parts=1):
         self._lock = Lock()
 
-        # where you write downloads
-        self._filename = "files/" + filename
+        self._filename = filename
+
+        # default download folder
+        self._path = "files/"
 
         # where you write replicas
         self._replicaname = "replicas/" + filename + ".json"
@@ -20,7 +22,7 @@ class File:
                 self._total_parts = int(jsonfile[0])
                 self._contents = jsonfile[1]   
         except:
-            self._total_parts = num_parts            
+            self._total_parts = int(num_parts)            
             self._contents = {}
         
     def write_to_replica(self, part, data):
@@ -47,10 +49,10 @@ class File:
             print("writing %s to disk" % (self._filename))
             
             # clear contents of file
-            open(self._filename, 'w+').close()
+            open(self._path + self._filename, 'w+').close()
             
             # append each part to file
-            with open(self._filename, "a+") as file:
+            with open(self._path + self._filename, "a+") as file:
                 for i in range (1, self._total_parts + 1):
                     file.write(self._contents[str(i)])
 
@@ -62,3 +64,13 @@ class File:
 
     def get_parts(self):
         return list(self._contents.keys())
+
+    def set_path(self, path):
+        
+        if not path[-1] == "/":
+            path += "/"
+
+        self._path = path
+
+    def set_total(self, total):
+        self._total_parts = int(total)

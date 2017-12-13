@@ -249,11 +249,16 @@ def user_interaction():
         if text == "nodes":
             print_node_list()
         elif text.startswith("upload"):
-            file = text[7:]
-            add_file(file)
+            filepath = text[7:]
+            manager.upload_file(filepath)
         elif text.startswith("download"):
-            file = text[9:]
-            manager.download_file(file)
+            try:
+                end_filename = text.index(" ", 9)
+                filename = text[9:end_filename]
+                path = text[end_filename + 1:]
+                manager.download_file(filename, path)
+            except ValueError:
+                print("please specify destination path")
         elif text == "files":
             print_file_list()
         elif text.startswith("delete"):
@@ -288,10 +293,6 @@ def user_interaction():
             network.display_users()
             #print(network.users())
 
-def add_file(filename):
-    # add to dfs and add replicas
-    manager.upload_file(filename)
-
 def print_node_list():
     seen_nodes = network.get_seen_nodes()
     for host in seen_nodes:
@@ -311,8 +312,8 @@ def print_help():
     print("Commands:")
     print("nodes - print node list")
     print("files - print file list")
-    print("upload [file_name] - add a file to the dfs")
-    print("download [file_name] - download file from the dfs")
+    print("upload [file_path] - add a file to the dfs")
+    print("download [file_name] [path] - download file from the dfs")
     print("delete [file_name] - delete a file from the dfs")
     print("join")
     print("connect [host_name]")

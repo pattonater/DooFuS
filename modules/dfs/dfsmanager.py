@@ -58,14 +58,15 @@ class DFSManager:
         else:
             self._fs.add_file(filename, uploader, [replica_host])
 
-    def upload_file(self, filename, priority = 0.5):
+    def upload_file(self, filepath, priority = 0.5):
+        filename = filepath[filepath.rfind("/") + 1:]
+
         if self._fs.check_file(filename, self._id):
             print("This file is already on the dfs")
             return False
             #raise dfs.DFSAddFileError(filename, self._id)
 
         # send dfs with updated file list to everyone
-        print("hello?")
         for host in self._network.get_connected_nodes():
             print("about to tell host %s the new dfs" % (host))
             self._network.add_file(host, filename, self._id) # Send metadata telling hosts about new file   
@@ -87,7 +88,7 @@ class DFSManager:
             if i == num_replicas:
                 break
             print("Called send replica on network: filename=%s, id=%s" % (filename, self._id))
-            self._network.send_replica(host, filename, self._id, "1", "1")
+            self._network.send_replica(host, filename, filepath, self._id, "1", "1")
 
             i += 1
 
@@ -107,7 +108,11 @@ class DFSManager:
         self._fs.delete_file(filename)
 
     ## Throws DFSManagerDownloadError exception. Please catch it.
-    def download_file(self, filename, dst = ""):
+    def download_file(self, filename, dst = "files/"):
+
+        # set file destination
+        self._filewriter.set_path(filename, dst)
+
         ## Check if you are a replica
         file = self._fs.get_file(filename)
         if not file:

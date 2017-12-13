@@ -12,16 +12,18 @@ class Filewriter:
         for filename in replicas:
             self._files[filename] = File(filename)
 
-    def write_to_replica(self, filename, part, total, data):
+    def add_file(self, filename, total = None):
         if not filename in self._files:
             self._files[filename] = File(filename, total)
-        
+        elif total:
+            self._files[filename].set_total(total)
+
+    def write_to_replica(self, filename, part, total, data):
+        self.add_file(filename, total)
         self._files[filename].write_to_replica(part, data)
 
-    def write_to_file(self, filename, part = 1, total = 1, data = None):
-        if not filename in self._files:
-            self._files[filename] = File(filename, 1)
-
+    def write_to_file(self, filename, part = None, total = None, data = None):
+        self.add_file(filename, total)
         self._files[filename].write_to_file(part, data)
 
     def read_from_replica(self, filename, part):
@@ -33,3 +35,7 @@ class Filewriter:
 
     def get_parts(self, filename):
         return self._files[filename].get_parts()
+
+    def set_path(self, filename, path):
+        self.add_file(filename)
+        self._files[filename].set_path(path)
