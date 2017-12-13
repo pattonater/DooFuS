@@ -38,7 +38,20 @@ class DFSManager:
                 self._fs.add_file(name, uploader, replicas)
             else:
                 self._fs.add_replicas(name, replicas)
+
+###### For updating local file system ########
+
+    def add_to_fs(self, filename, uploader):
+        self._fs.add_file(filename, uploader)
             
+    def add_replica(self, filename, replicator):
+        self._fs.add_replicas(filename, [replicator])
+
+    def clear_files(self):
+        self._fs.clear_files()
+
+##############################################
+
     def acknowledge_replica(self, filename, uploader, replica_host):
         if self._fs.check_file(filename, uploader):
             self._fs.add_replicas(filename, replica_host)
@@ -91,7 +104,7 @@ class DFSManager:
         ## remove from disk
         self._filewriter.remove(filename)
         ## remove from _fs
-        self._fs.remove_file(filename)
+        self._fs.delete_file(filename)
 
     ## Throws DFSManagerDownloadError exception. Please catch it.
     def download_file(self, filename, dst = ""):
@@ -105,14 +118,6 @@ class DFSManager:
 
         if self._id in file_replicas:
             self._filewriter.write_to_file(filename)
-            '''try:
-                from shutil import copy2
-                copy2("replicas/" + filename, "files/" + filename)
-                return
-            except IOError:
-                print("Cannot retrieve")
-                ## Something bad happened. Let's try to get it from somebody else.
-                pass'''
 
         ## Find active replicas
         ##active_hosts  = self._network._connected
@@ -130,12 +135,11 @@ class DFSManager:
 
         self._network.request_file(active_replicas[0], filename, "1", "1")
 
-
     def delete_file(self, filename):
         ## remove from disk (if present)
         ## remove from _fs
-        ## tell network to tell replicas
-        pass
+        self._fs.delete_file(filename)
+        ## tell network to tell replicas        
 
     def set_priority(self, filename, priority):
         ## punt

@@ -28,8 +28,6 @@ my_id = None
 
 network = None
 
-dfs = None
-
 manager = None
 
 filewriter = None
@@ -172,7 +170,7 @@ def handle_have_replica(msg, host):
     replica_node = network.id(host)
     
     # update my dfs with new replica info
-    manager._fs.add_replicas(file_name, [replica_node])
+    manager.add_replica(file_name, replica_node)
     
 def handle_file_slice(msg):
     msg = msg.split(Message.DELIMITER)
@@ -224,7 +222,7 @@ def handle_upload(msg, host):
     filename = msglist[0]
     uploader = msglist[1]
 
-    dfs.add_file(filename, uploader)
+    manager.add_to_fs(filename, uploader)
 
         
 #########################################
@@ -259,7 +257,7 @@ def user_interaction():
         elif text == "files":
             print_file_list()
         elif text.startswith("delete"):
-            dfs.delete_file(text[7:])
+            manager.delete_file(text[7:])
         elif text == "help":
             print_help()
         elif text == "quit" or text == "q":
@@ -278,7 +276,7 @@ def user_interaction():
         elif text == "refresh":
             print("I don't know how")
         elif text == "clear files":
-            dfs.clear_files()
+            manager.clear_files()
         elif text == "debug":
             log.toggle_debug()
         elif text == "info":
@@ -302,7 +300,6 @@ def print_node_list():
 
 def print_file_list():
     manager.display_files()
-
     
 # cuts off the end of the text for better formatting
 def truncate(text, length):
@@ -311,8 +308,20 @@ def truncate(text, length):
     return text
 
 def print_help():
-    print("Commands:\n nodes - print node list\n files - print file list\n upload [file_name] - add a file to the dfs\n delete [file_name] - delete a file from the dfs\n join\n connect [host_name]\n myinfo - print ip addr and userid\n verify [user_id]\n refresh\n debug - toggle debugging mode\n info - toggle info mode\n quit")
-
+    print("Commands:")
+    print("nodes - print node list")
+    print("files - print file list")
+    print("upload [file_name] - add a file to the dfs")
+    print("download [file_name] - download file from the dfs")
+    print("delete [file_name] - delete a file from the dfs")
+    print("join")
+    print("connect [host_name]")
+    print("myinfo - print ip addr and userid")
+    print("verify [user_id]")
+    print("refresh")
+    print("debug - toggle debugging mode")
+    print("info - toggle info mode")
+    print("quit")
     
 #########################################
 ## Startup
@@ -335,7 +344,6 @@ if __name__ == "__main__":
     network = Network(profile, local_test)
 
     manager = DFSM.DFSManager(network, my_id, filewriter, "modules/dfs/dfs.json")
-    dfs = manager.get_DFS_ref()
 
     log = Log()
     logger = log.get_logger()
