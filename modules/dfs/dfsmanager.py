@@ -150,6 +150,7 @@ class DFSManager:
 
     def delete_file(self, filename):
         ## remove from disk (if present)
+        self._filewriter.remove(filename)
         ## remove from _fs
         self._filewriter.remove(filename) # does this need to check for existence of filename??
         self._fs.delete_file(filename)

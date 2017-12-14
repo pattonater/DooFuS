@@ -9,8 +9,12 @@ class Filewriter:
         # adding directories to replicas will break this
         replicas = listdir("replicas/")
         # add all existing files
-        for filename in replicas:
-            self._files[filename] = File(filename)
+        for file in replicas:
+            filename = file[:-5]
+            ext = file[-5:]
+            if ext == ".json":
+                print("loading %s replica" % filename)
+                self._files[filename] = File(filename)
 
     def add_file(self, filename, total = None):
         if not filename in self._files:
