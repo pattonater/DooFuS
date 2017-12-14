@@ -182,6 +182,10 @@ class Network:
         dfs_json_str = json.dumps(dfs)
         node.send_dfs_info(dfs_json_str)
 
+    def delete_file(self, file_name):
+        for host in list(self._connected):
+            self._nodes[host].delete_file(file_name)
+        
 ######################################
 ## Network Internal Interface
 #####################################

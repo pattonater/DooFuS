@@ -102,8 +102,16 @@ class DFSManager:
         self._filewriter.write_to_replica(filename, part, total, data)
 
     def dump_replica(self, filename):
-        ## remove from disk
-        self._filewriter.remove(filename)
+        file = self._fs.get_file(filename)
+        if not file:
+            print("Invalid name")
+            return
+
+        # Check that you are a replica before removing file from disk
+        file_replicas = file["replicas"]
+        if self._id in file_replicas:
+            self._filewriter.remove(filename)
+
         ## remove from _fs
         self._fs.delete_file(filename)
 
@@ -143,7 +151,10 @@ class DFSManager:
     def delete_file(self, filename):
         ## remove from disk (if present)
         ## remove from _fs
+        self._filewriter.remove(filename) # does this need to check for existence of filename??
         self._fs.delete_file(filename)
+
+        self._network.delete_file(filename)
         ## tell network to tell replicas        
 
     def set_priority(self, filename, priority):

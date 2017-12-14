@@ -133,6 +133,8 @@ def listen_for_messages(conn, host):
                     print("%s poked you!" % network.id(host))
                 elif type == Message.Tags.UPLOAD_FILE:
                     handle_upload(msg, host)
+                elif type == Message.Tags.REMOVE_FILE:
+                    handle_remove_file(msg, host)
 
 def handle_request_file(msg, host):
     msg = msg.split(Message.DELIMITER)
@@ -224,7 +226,11 @@ def handle_upload(msg, host):
 
     manager.add_to_fs(filename, uploader)
 
-        
+# tells dfsmanager to delete the file. dfsmanager deletes local replica if necessary
+def handle_remove_file(file_name, host):
+    logger.info("Removing %s as requested by %s" % (file_name, host))
+    manager.dump_replica(file_name)
+    
 #########################################
 ## Thread for recieving new 1;5B1;5Bconnections
 #########################################
