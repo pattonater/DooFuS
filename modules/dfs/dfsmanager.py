@@ -142,6 +142,7 @@ class DFSManager:
 
     def delete_file(self, filename):
         ## remove from disk (if present)
+        self._filewriter.remove(filename)
         ## remove from _fs
         self._fs.delete_file(filename)
         ## tell network to tell replicas        

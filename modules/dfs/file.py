@@ -1,5 +1,6 @@
 import json
 from threading import Lock
+from os import remove
 
 class File:
 
@@ -60,7 +61,7 @@ class File:
         return self._contents[str(part)]
 
     def remove(self):
-        os.remove(self._replicaname)
+        remove(self._replicaname)
 
     def get_parts(self):
         return list(self._contents.keys())
