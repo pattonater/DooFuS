@@ -83,6 +83,9 @@ class Node:
     def serve_file_request(self, file_name, part_num, total_parts, file):
         return self._send_message(Message.Tags.FILE_SLICE, [file_name, part_num, total_parts, file])
 
+    def delete_file(self, file_name):
+        return self._send_message(Message.Tags.REMOVE_FILE, [file_name])
+
     
     # Since network.py will theoretically be sending heartbeats and other messages on different
     # threads (but on the same port), it's important to lock around the
