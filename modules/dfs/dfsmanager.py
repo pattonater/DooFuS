@@ -66,11 +66,6 @@ class DFSManager:
             return False
             #raise dfs.DFSAddFileError(filename, self._id)
 
-        # send dfs with updated file list to everyone
-        for host in self._network.get_connected_nodes():
-            print("about to tell host %s the new dfs" % (host))
-            self._network.add_file(host, filename, self._id) # Send metadata telling hosts about new file   
-
         ## choose replicas (all)
         total_nodes = len(self._network._connected)
 
@@ -87,13 +82,22 @@ class DFSManager:
         for host in self._network._connected:
             if i == num_replicas:
                 break
-            print("Called send replica on network: filename=%s, id=%s" % (filename, self._id))
-            self._network.send_replica(host, filename, filepath, self._id, "1", "1")
+            data = self._filewriter.read_from_file(filepath)
+            if not data:
+                print("No such file: %s" % (filepath))
+                return False
+            self._network.send_replica(host, filename, self._id, "1", "1", data)
 
             i += 1
 
-        self._fs.add_file(filename, self._id)
+        #self._fs.add_file(filename, self._id)
         
+        # ####### Don't need this because the replicas will tell them
+        # send dfs with updated file list to everyone
+        #for host in self._network.get_connected_nodes():
+         #   print("about to tell host %s the new dfs" % (host))
+          #  self._network.add_file(host, filename, self._id) # Send metadata telling hosts about new file   
+
 
     def store_replica(self, filename, uploader, part, total, data):
         ## add replica to dfs
@@ -145,7 +149,8 @@ class DFSManager:
         self._filewriter.remove(filename)
         ## remove from _fs
         self._fs.delete_file(filename)
-        ## tell network to tell replicas        
+        ## tell network to tell replicas
+        print("Deleted %s" % (filename))
 
     def set_priority(self, filename, priority):
         ## punt

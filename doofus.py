@@ -167,10 +167,11 @@ def handle_store_replica(msg, host):
 def handle_have_replica(msg, host):
     msg = msg.split(Message.DELIMITER)
     file_name = msg[0]
+    uploader = msg[1]
     replica_node = network.id(host)
     
     # update my dfs with new replica info
-    manager.add_replica(file_name, replica_node)
+    manager.acknowledge_replica(file_name, uploader, replica_node)
     
 def handle_file_slice(msg):
     msg = msg.split(Message.DELIMITER)

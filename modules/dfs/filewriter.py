@@ -6,7 +6,6 @@ class Filewriter:
 
     def __init__(self):
         self._files = {}
-        # adding directories to replicas will break this
         replicas = listdir("replicas/")
         # add all existing files
         for file in replicas:
@@ -14,7 +13,7 @@ class Filewriter:
             ext = file[-5:]
             if ext == ".json":
                 print("loading %s replica" % filename)
-                self._files[filename] = File(filename)
+                self.add_file(filename)
 
     def add_file(self, filename, total = None):
         if not filename in self._files:
@@ -32,6 +31,13 @@ class Filewriter:
 
     def read_from_replica(self, filename, part):
         return self._files[filename].read_from_replica(part)
+
+    def read_from_file(self, filepath):
+        try:
+            with open(filepath, "r") as file:
+                return file.read()
+        except FileNotFoundError:
+            return False
 
     def remove(self, filename):
         self._files[filename].remove()
