@@ -197,10 +197,30 @@ class Network:
         print(self._users)
 
     def display_users(self):
+        online = []
+        offline = []
         for user in self._users.keys():
-            host = self._users[user]
-            online = "Online" if host else "Offline"
-            print("%s     %s" % (user, online))
+            if self._users[user]:
+                online.append(user)
+            else:
+                offline.append(user)
+
+        print("*Online*")
+        for user in online:
+            self._display_user(user)
+            
+        print("")
+        print("*Offline*")
+        off_users = ", ".join(offline)
+        print(off_users)
+        
+    def _display_user(self, user):
+        host = self._users[user]
+        host = host if host else "not connected"
+
+        if host == self._me.host:
+            host = "me"
+        print("%s     %s" % (user, host))
             
 
     def startup(self):
