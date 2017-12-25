@@ -1,3 +1,3 @@
 # DooFuS
 
-YOU ARE IN DOOFUS
+DooFuS is a peer-to-peer shared file system designed for a specific use case: small networks of users with limited space who want to store and share files with probabilistic availability. Distributed file systems render transparent a network of nodes collaborating to maintain data consistency and redundancy to the user who interacts with it as one would a local file system. Peer-to-peer networks use complete functional homogeneity to create highly resilient networks with little established infrastructure. Our system is a combination of these two ideas. However, peer-to-peer systems usually rely on a high node count to assure reliability, while ours attempts to maintain its resilience and file availability despite a small number of nodes. This is useful because it lets small groups or individuals securely and easily gain fault tolerance against file loss using just their own computers (and so without forfeiting any privacy). 
